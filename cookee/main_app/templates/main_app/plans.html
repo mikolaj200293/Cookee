@@ -1,0 +1,17 @@
+{% extends 'main_app/base.html' %}
+{% block header %}
+    <h2>Dostępne plany</h2>
+{% endblock %}
+{% block content %}
+    <ul>
+    {% for plan in plans %}
+        <li>
+            <a href="{% url 'plan-details' plan.id %}">{{ plan.plan_name }}</a>
+            <p>Czas trwania: {{ plan.plan_length }} dni</p>
+        </li>
+    {% endfor %}
+    </ul>
+    <div><a href="{% url 'add-plan' %}">Dodaj plan</a></div>
+{% endblock %}
+{% block footer %}
+{% endblock %}

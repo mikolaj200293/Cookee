@@ -1,0 +1,20 @@
+{% extends 'main_app/base.html' %}
+{% block header %}
+    <h2>Dostępne przepisy</h2>
+{% endblock %}
+{% block content %}
+    <ul>
+    {% for recipe in recipes %}
+        <li>
+            <p>{{ recipe.recipe_name }} {{ recipe.recipe_calories }}
+            {% for product in recipe.products.all %}
+                {{ product.product_name }}
+            {% endfor %}
+            </p>
+        </li>
+    {% endfor %}
+    </ul>
+    <div><a href="{% url 'add-recipe' %}">Dodaj przepis</a></div>
+{% endblock %}
+{% block footer %}
+{% endblock %}

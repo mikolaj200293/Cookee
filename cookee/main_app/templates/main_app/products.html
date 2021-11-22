@@ -1,0 +1,17 @@
+{% extends 'main_app/base.html' %}
+{% block header %}
+    <h2>Dostępne produkty</h2>
+{% endblock %}
+{% block content %}
+    <ul>
+    {% for product in products %}
+        <li>
+            <p>{{ product.product_name }}, białko: {{ product.proteins }}g, węglowodany: {{ product.carbohydrates }}g,
+                tłuszcze: {{ product.fats }}g, kaloryczność: {{ product.calories }}kcal/100g</p>
+        </li>
+    {% endfor %}
+    </ul>
+    <div><a href="{% url 'add-product' %}">Dodaj produkt</a></div>
+{% endblock %}
+{% block footer %}
+{% endblock %}

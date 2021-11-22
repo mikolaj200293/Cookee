@@ -1,0 +1,23 @@
+{% extends 'main_app/base.html' %}
+{% block content %}
+    <ul>
+        <li>{{ plan.plan_name }}</li>
+        <li>{{ plan.plan_length }}</li>
+        <li>Persons:</li>
+        {% for person in persons %}
+        <li>{{ person.name }}</li>
+        {% endfor %}
+        <li>Zapotrzebowanie: {{ calories }}kcal</li>
+    </ul>
+{% endblock %}
+{% block footer %}
+    <h2>Skonfiguruj plan</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Dodaj">
+    </form>
+    {% for meal in meals %}
+    <div>Dzień: {{ meal.plan_day }}, Posiłek: {{ meal.get_meal_display }}{{ meal.recipes }}{{ meal.recipes.calories }}</div>
+    {% endfor %}
+{% endblock %}

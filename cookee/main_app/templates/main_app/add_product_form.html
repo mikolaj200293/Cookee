@@ -1,0 +1,15 @@
+{% extends 'main_app/base.html' %}
+
+{% block header %}
+    <h2>Dodaj produkt (100g)</h2>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Dodaj">
+    </form>
+{% endblock %}
+{% block error_message %}
+    {{ error_message }}
+{% endblock %}

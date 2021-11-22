@@ -1,0 +1,16 @@
+{% extends 'main_app/base.html' %}
+
+{% block header %}
+    <h2>Zaloguj się</h2>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Zaloguj">
+    </form>
+{% endblock %}
+{% block footer %}
+    {{ message }}
+<a href="{% url 'add-user' %}">Załóż konto</a>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'main_app/base.html' %}
+
+{% block header %}
+    <h2>Załóż konto</h2>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Załóż konto">
+    </form>
+{% endblock %}
+{% block error_message %}
+    <div>{{ error_message }}</div>
+{% endblock %}
