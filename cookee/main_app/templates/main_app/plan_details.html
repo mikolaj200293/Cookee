@@ -1,5 +1,5 @@
 {% extends 'main_app/base.html' %}
-{% block content %}
+{% block header %}
     <ul>
         <li>{{ plan.plan_name }}</li>
         <li>{{ plan.plan_length }}</li>
@@ -9,6 +9,19 @@
         {% endfor %}
         <li>Zapotrzebowanie: {{ calories }}kcal</li>
     </ul>
+{% endblock %}
+{% block content %}
+    {% for day in plan_days %}
+        <ul>Dzień {{ day }}
+            {% for meal in meals %}
+                {% if meal.plan_day == day %}
+                    <li>
+                        {{ meal.get_meal_display }}: {{ meal.recipes }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endfor %}
 {% endblock %}
 {% block footer %}
     <h2>Skonfiguruj plan</h2>

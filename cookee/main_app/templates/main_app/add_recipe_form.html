@@ -4,7 +4,7 @@
     <h2>Dodaj przepis</h2>
 {% endblock %}
 {% block content %}
-    <form action="{% url 'recipe-details' recipe_id %}" method="post">
+    <form action="" method="post">
         {% csrf_token %}
         {{ form }}
         <input type="submit" value="Dodaj">

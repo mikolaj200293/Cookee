@@ -38,6 +38,9 @@ class PlanForm(forms.ModelForm):
     class Meta:
         model = Plan
         exclude = ['user']
+        widgets = {
+            'persons': forms.CheckboxSelectMultiple,
+        }
 
 
 class MealForm(forms.ModelForm):
@@ -49,4 +52,8 @@ class MealForm(forms.ModelForm):
 class QuantitiesForm(forms.ModelForm):
     class Meta:
         model = ProductsQuantities
-        fields = '__all__'
+        exclude = ['recipe_id']
+
+    field_order = ['product_id', 'product_quantity']
+
+

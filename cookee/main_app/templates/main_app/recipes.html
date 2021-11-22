@@ -10,6 +10,7 @@
             {% for product in recipe.products.all %}
                 {{ product.product_name }}
             {% endfor %}
+            <a href="{% url 'recipe-details' recipe.id %}">Edytuj</a>
             </p>
         </li>
     {% endfor %}
