@@ -1,0 +1,12 @@
+{% extends 'main_app/base.html' %}
+
+{% block content_head %}
+    <h2>Zmień produkt</h2>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Zapisz">
+    </form>
+{% endblock %}

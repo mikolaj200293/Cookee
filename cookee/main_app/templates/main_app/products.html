@@ -7,7 +7,9 @@
     {% for product in products %}
         <li>
             <p>{{ product.product_name }}, białko: {{ product.proteins }}g, węglowodany: {{ product.carbohydrates }}g,
-                tłuszcze: {{ product.fats }}g, kaloryczność: {{ product.calories }}kcal/100g</p>
+                tłuszcze: {{ product.fats }}g, kaloryczność: {{ product.calories }}kcal/100g
+                <a href="{% url 'delete-product' product.id %}">Usuń</a>
+            <a href="{% url 'edit-product' product.id %}">Edytuj</a></p>
         </li>
     {% endfor %}
     </ul>

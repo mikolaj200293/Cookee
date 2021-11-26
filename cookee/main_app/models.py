@@ -52,7 +52,7 @@ class Recipe(models.Model):
         return calories_calculated
 
     def __str__(self):
-        return f"{self.recipe_name}"
+        return f"{self.recipe_name} ({self.recipe_calories} kcal)"
 
 
 class Persons(models.Model):

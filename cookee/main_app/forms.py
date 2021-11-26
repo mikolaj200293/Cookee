@@ -48,6 +48,9 @@ class MealForm(forms.ModelForm):
         model = Meal
         exclude = ['plan_name', 'user']
 
+    plan_day = forms.IntegerField(min_value=1)
+
+
 
 class QuantitiesForm(forms.ModelForm):
     class Meta:

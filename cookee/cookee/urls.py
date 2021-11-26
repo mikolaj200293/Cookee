@@ -29,6 +29,10 @@ urlpatterns = [
     path('add_recipe', RecipeCreate.as_view(), name='add-recipe'),
     path('add_product', ProductCreate.as_view(), name='add-product'),
     path('add_plan', PlanCreate.as_view(), name='add-plan'),
+    path('delete_product/<pk>', ProductDelete.as_view(), name='delete-product'),
+    path('delete_recipe/<pk>', RecipeDelete.as_view(), name='delete-recipe'),
+    path('edit_product/<int:product_id>', ProductUpdate.as_view(), name='edit-product'),
+    path('edit_recipe/<int:recipe_id>', RecipeUpdate.as_view(), name='edit-recipe'),
     path('plan_details/<int:plan_id>', PlanDetailsView.as_view(), name='plan-details'),
     path('recipe_details/<int:recipe_id>', RecipeDetailsView.as_view(), name='recipe-details'),
 ]

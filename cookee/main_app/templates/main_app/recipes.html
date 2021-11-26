@@ -6,11 +6,12 @@
     <ul>
     {% for recipe in recipes %}
         <li>
-            <p>{{ recipe.recipe_name }} {{ recipe.recipe_calories }}
+            <p><a href="{% url 'recipe-details' recipe.id %}">{{ recipe.recipe_name }}</a> {{ recipe.recipe_calories }}
             {% for product in recipe.products.all %}
                 {{ product.product_name }}
             {% endfor %}
-            <a href="{% url 'recipe-details' recipe.id %}">Edytuj</a>
+            <a href="{% url 'edit-recipe' recipe.id %}">Edytuj</a>
+            <a href="{% url 'delete-recipe' recipe.id %}">Usuń</a>
             </p>
         </li>
     {% endfor %}

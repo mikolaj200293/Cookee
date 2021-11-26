@@ -2,8 +2,8 @@
 {% block header %}
     <ul>
         <li>{{ plan.plan_name }}</li>
-        <li>{{ plan.plan_length }}</li>
-        <li>Persons:</li>
+        <li>{{ plan.plan_length }} dni</li>
+        <li>Osoby:</li>
         {% for person in persons %}
         <li>{{ person.name }}</li>
         {% endfor %}
@@ -13,6 +13,11 @@
 {% block content %}
     {% for day in plan_days %}
         <ul>Dzień {{ day }}
+            {% for day_calories in days_calories %}
+            {% if forloop.counter == day %}
+            {{ day_calories }} kcal
+            {% endif %}
+            {% endfor %}
             {% for meal in meals %}
                 {% if meal.plan_day == day %}
                     <li>
@@ -22,6 +27,7 @@
             {% endfor %}
         </ul>
     {% endfor %}
+    <div>{{ message }}</div>
 {% endblock %}
 {% block footer %}
     <h2>Skonfiguruj plan</h2>
@@ -30,7 +36,7 @@
         {{ form }}
         <input type="submit" value="Dodaj">
     </form>
-    {% for meal in meals %}
-    <div>Dzień: {{ meal.plan_day }}, Posiłek: {{ meal.get_meal_display }}{{ meal.recipes }}{{ meal.recipes.calories }}</div>
-    {% endfor %}
+{#    {% for meal in meals %}#}
+{#    <div>Dzień: {{ meal.plan_day }}, Posiłek: {{ meal.get_meal_display }}{{ meal.recipes }}{{ meal.recipes.calories }}</div>#}
+{#    {% endfor %}#}
 {% endblock %}
