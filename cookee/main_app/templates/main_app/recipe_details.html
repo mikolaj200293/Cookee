@@ -1,7 +1,10 @@
 {% extends 'main_app/base.html' %}
 {% block header %}
     <ul>
-        <li>{{ recipe.recipe_name }}</li>
+        <li>{{ recipe.recipe_name }}:
+        {% for product in products %}
+        {{ product.product_name }} {{ product.productsquantities_set.get.product_quantity }}g
+    {% endfor %} {{ recipe.recipe_calories }}kcal</li>
     </ul>
 {% endblock %}
 {% block content %}

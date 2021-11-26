@@ -6,7 +6,8 @@
     <ul>
     {% for recipe in recipes %}
         <li>
-            <p><a href="{% url 'recipe-details' recipe.id %}">{{ recipe.recipe_name }}</a> {{ recipe.recipe_calories }}
+            <p><a href="{% url 'recipe-details' recipe.id %}">{{ recipe.recipe_name }}</a> Ilość porcji:
+                {{ recipe.portions }}, {{ recipe.recipe_calories }}kcal
             {% for product in recipe.products.all %}
                 {{ product.product_name }}
             {% endfor %}

@@ -32,6 +32,9 @@ class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
         exclude = ['add_date', 'edit_date']
+        widgets = {
+            'products': forms.CheckboxSelectMultiple,
+        }
 
 
 class PlanForm(forms.ModelForm):
@@ -49,6 +52,7 @@ class MealForm(forms.ModelForm):
         exclude = ['plan_name', 'user']
 
     plan_day = forms.IntegerField(min_value=1)
+    portions = forms.IntegerField(min_value=1)
 
 
 

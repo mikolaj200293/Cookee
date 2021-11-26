@@ -29,7 +29,7 @@ class Product(models.Model):
     @property
     def calories(self):
         calories_calculated = self.proteins * 4 + self.carbohydrates * 4 + self.fats * 9
-        return calories_calculated
+        return round(calories_calculated, 2)
 
     def __str__(self):
         return f"{self.product_name}"
@@ -48,8 +48,9 @@ class Recipe(models.Model):
     def recipe_calories(self):
         calories_calculated = 0
         for product in self.products.all():
-            calories_calculated += product.calories
-        return calories_calculated
+            calories_calculated += product.calories * product.productsquantities_set.get(product_id=product.id).\
+                product_quantity / 100
+        return round(calories_calculated, 2)
 
     def __str__(self):
         return f"{self.recipe_name} ({self.recipe_calories} kcal)"
@@ -89,3 +90,8 @@ class ProductsQuantities(models.Model):
     product_quantity = models.FloatField(default=0)
     recipe_id = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    @property
+    def one_portion_product_quantity(self):
+        result = self.product_quantity / self.recipe_id.portions
+        return result

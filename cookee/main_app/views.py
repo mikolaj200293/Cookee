@@ -176,8 +176,8 @@ class RecipeUpdate(LoginRequiredMixin, UpdateView):
     login_url = '/login'
     success_url = '/recipes'
 
+    form_class = RecipeForm
     model = Recipe
-    fields = ['recipe_name', 'description', 'preparation_time', 'products', 'portions']
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
@@ -209,15 +209,11 @@ class ProductCreate(LoginRequiredMixin, View):
             carbohydrates = form.cleaned_data['carbohydrates']
             fats = form.cleaned_data['fats']
             category = form.cleaned_data['category']
-            if float(proteins) + float(carbohydrates) + float(fats) == 100:
-                Product.objects.create(product_name=product_name, proteins=proteins, carbohydrates=carbohydrates,
-                                       fats=fats, category=category)
-                products = Product.objects.all()
-                ctx['products'] = products
-                return TemplateResponse(request, 'main_app/products.html', ctx)
-            else:
-                ctx['error_message'] = 'Suma składników makro musi wynosić 100'
-                return TemplateResponse(request, 'main_app/add_product_form.html', ctx)
+            Product.objects.create(product_name=product_name, proteins=proteins, carbohydrates=carbohydrates,
+                                   fats=fats, category=category)
+            products = Product.objects.all()
+            ctx['products'] = products
+            return TemplateResponse(request, 'main_app/products.html', ctx)
 
 
 class ProductDelete(LoginRequiredMixin, DeleteView):
@@ -328,11 +324,15 @@ class PlanDetailsView(LoginRequiredMixin, View):
             plan_day = form.cleaned_data['plan_day']
             meal = form.cleaned_data['meal']
             recipes = form.cleaned_data['recipes']
+            portions = form.cleaned_data['portions']
             user = request.user
+            ctx['portions'] = portions
             if Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=meal).exists() and calories > \
                     calculate_days_calories(plan)[plan_day - 1]:
                 Meal.objects.filter(user=user, plan_day=plan_day, meal=meal, plan_name=plan). \
                     update(user=user, plan_day=plan_day, meal=meal, recipes=recipes)
+                portions_update = Meal.objects.get(user=user, plan_day=plan_day, meal=meal, plan_name=plan).\
+                    recipes.portions = portions
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
             elif Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=meal) and calories < \
@@ -355,7 +355,8 @@ class RecipeDetailsView(LoginRequiredMixin, View):
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
         form.fields['product_id'].queryset = recipe_products
-        form.initial = {'product_id': recipe_products[0]}
+        if recipe_products:
+            form.initial = {'product_id': recipe_products[0]}
         ctx = {
             'form': form,
             'recipe': recipe,
@@ -368,7 +369,8 @@ class RecipeDetailsView(LoginRequiredMixin, View):
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
         form.fields['product_id'].queryset = recipe_products
-        form.initial = {'product_id': recipe_products[0]}
+        if recipe_products:
+            form.initial = {'product_id': recipe_products[0]}
         ctx = {
             'form': form,
             'recipe': recipe,
