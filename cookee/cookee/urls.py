@@ -42,4 +42,5 @@ urlpatterns = [
     path('edit_plan/<int:plan_id>', PlanUpdate.as_view(), name='edit-plan'),
     path('plan_details/<int:plan_id>', PlanDetailsView.as_view(), name='plan-details'),
     path('recipe_details/<int:recipe_id>', RecipeDetailsView.as_view(), name='recipe-details'),
+    path('shopping_list/plan/<int:plan_id>', ShoppingListCreate.as_view(), name='shopping-list'),
 ]

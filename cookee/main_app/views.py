@@ -470,3 +470,19 @@ class RecipeDetailsView(LoginRequiredMixin, View):
             return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
 
 
+class ShoppingListCreate(LoginRequiredMixin, View):
+
+    def get(self, request, plan_id):
+        plan = Plan.objects.get(pk=plan_id)
+        meals = plan.meal_set.all()
+        categories = ProductCategory.objects.all()
+        recipes_products = [(meal.recipes.productsquantities_set.all(), meal.meal_portions) for meal in meals]
+        shopping_list = {'categories': {}}
+        for products in recipes_products:
+            for product in products[0]:
+                # print(product.product_id.category, product.product_id, product.one_portion_product_quantity * products[1])
+                if product.product_id.category.category_name not in shopping_list['categories']:
+                    shopping_list['categories'].update({product.product_id.category.category_name: []})
+        print(shopping_list)
+
+

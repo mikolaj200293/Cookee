@@ -29,6 +29,7 @@
         </ul>
     {% endfor %}
     <div>{{ message }}</div>
+    <div><a href="{% url 'shopping-list' plan.id %}"><button>Wygeneruj listę zakupów</button></a></div>
 {% endblock %}
 {% block footer %}
     <h2>Skonfiguruj plan</h2>
@@ -37,7 +38,4 @@
         {{ form }}
         <input type="submit" value="Zapisz">
     </form>
-{#    {% for meal in meals %}#}
-{#    <div>Dzień: {{ meal.plan_day }}, Posiłek: {{ meal.get_meal_display }}{{ meal.recipes }}{{ meal.recipes.calories }}</div>#}
-{#    {% endfor %}#}
 {% endblock %}
