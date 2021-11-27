@@ -1,0 +1,18 @@
+{% extends 'main_app/base.html' %}
+{% block header %}
+    <h2>Dostępne osoby</h2>
+{% endblock %}
+{% block content %}
+    <ul>
+    {% for person in persons %}
+        <li>
+            <p>{{ person.name }}, zapotrzebowanie: {{ person.calories }}kcal
+                <a href="{% url 'delete-person' person.id %}">Usuń</a>
+            <a href="{% url 'edit-person' person.id %}">Edytuj</a></p>
+        </li>
+    {% endfor %}
+    </ul>
+    <div><a href="{% url 'add-person' %}">Dodaj osobę</a></div>
+{% endblock %}
+{% block footer %}
+{% endblock %}

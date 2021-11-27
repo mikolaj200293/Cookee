@@ -129,16 +129,65 @@ class PlansView(View):
         return TemplateResponse(request, 'main_app/plans.html', ctx)
 
 
+class PersonsView(View):
+    def get(self, request):
+        persons = Persons.objects.all()
+        ctx = {
+            'persons': persons
+        }
+        return TemplateResponse(request, 'main_app/persons.html', ctx)
+
+
+class PersonCreate(LoginRequiredMixin, View):
+    login_url = '/login'
+    success_url = '/persons'
+
+    def get(self, request):
+        form = PersonsForm()
+        ctx = {
+            'form': form
+        }
+        return TemplateResponse(request, 'main_app/add_person_form.html', ctx)
+
+    def post(self, request):
+        form = PersonsForm(request.POST)
+        ctx = {
+            'form': form,
+        }
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            calories = form.cleaned_data['calories']
+            user = request.user
+            Persons.objects.create(name=name, calories=calories, user=user)
+            persons = Persons.objects.all()
+            ctx['persons'] = persons
+            return TemplateResponse(request, 'main_app/persons.html', ctx)
+
+
+class PersonDelete(LoginRequiredMixin, DeleteView):
+    login_url = '/login'
+    model = Persons
+    success_url = '/persons'
+
+
+class PersonUpdate(LoginRequiredMixin, UpdateView):
+    login_url = '/login'
+    success_url = '/persons'
+
+    form_class = PersonsForm
+    model = Persons
+    template_name_suffix = '_update_form'
+
+    def get_object(self, queryset=None):
+        return Persons.objects.get(pk=self.kwargs['person_id'])
+
+    def get_success_url(self):
+        return reverse("persons")
+
+
 class RecipeCreate(LoginRequiredMixin, View):
     login_url = '/login'
     success_url = '/add_recipe'
-
-    # form_class = RecipeForm
-    # template_name = "main_app/add_recipe_form.html"
-
-    # def get_success_url(self):
-    #     recipe_id = Recipe.objects.last().pk
-    #     return redirect(reverse('recipe-details', kwargs={"recipe_id": recipe_id}))
 
     def get(self, request):
         form = RecipeForm()
@@ -226,8 +275,8 @@ class ProductUpdate(LoginRequiredMixin, UpdateView):
     login_url = '/login'
     success_url = '/products'
 
+    form_class = ProductForm
     model = Product
-    fields = ['product_name', 'proteins', 'carbohydrates', 'fats', 'category']
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
@@ -265,14 +314,39 @@ class PlanCreate(LoginRequiredMixin, View):
             return TemplateResponse(request, 'main_app/plans.html', ctx)
 
 
+class PlanDelete(LoginRequiredMixin, DeleteView):
+    login_url = '/login'
+    model = Plan
+    success_url = '/plans'
+
+
+class PlanUpdate(LoginRequiredMixin, UpdateView):
+    login_url = '/login'
+    success_url = '/plans'
+
+    form_class = PlanForm
+    model = Plan
+    template_name_suffix = '_update_form'
+
+    def get_object(self, queryset=None):
+        return Plan.objects.get(pk=self.kwargs['plan_id'])
+
+    def get_success_url(self):
+        return reverse("plans")
+
+    # def get_form(self, form_class=PlanForm):
+    #     form = super().get_form(form_class)
+    #     form.fields['persons'].widget = forms.CheckboxSelectMultiple()
+    #     return form
+
 def calculate_days_calories(plan):
     days_calories_list = []
     for day in range(1, plan.plan_length + 1):
         day_meals = plan.meal_set.filter(plan_day=day)
         day_calories = 0
         for meal in day_meals:
-            day_calories += meal.recipes.recipe_calories
-        days_calories_list.append(day_calories)
+            day_calories += meal.meal_portions * meal.recipes.portion_calories
+        days_calories_list.append(round(day_calories, 2))
     return days_calories_list
 
 
@@ -324,26 +398,37 @@ class PlanDetailsView(LoginRequiredMixin, View):
             plan_day = form.cleaned_data['plan_day']
             meal = form.cleaned_data['meal']
             recipes = form.cleaned_data['recipes']
-            portions = form.cleaned_data['portions']
+            portions = form.cleaned_data['meal_portions']
             user = request.user
-            ctx['portions'] = portions
-            if Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=meal).exists() and calories > \
-                    calculate_days_calories(plan)[plan_day - 1]:
-                Meal.objects.filter(user=user, plan_day=plan_day, meal=meal, plan_name=plan). \
-                    update(user=user, plan_day=plan_day, meal=meal, recipes=recipes)
-                portions_update = Meal.objects.get(user=user, plan_day=plan_day, meal=meal, plan_name=plan).\
-                    recipes.portions = portions
+            meal_object = Meal.objects.filter(user=user, plan_name=plan, plan_day=plan_day, meal=meal)
+            meal_calories = recipes.portion_calories * portions
+            if meal_object.exists() and calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+                meal_object.update(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
-            elif Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=meal) and calories < \
-                    calculate_days_calories(plan)[plan_day - 1]:
+            elif meal_object.exists() and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
-            else:
-                instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes)
+            elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+                instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
                 instance.plan_name.add(plan_id)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
+            elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
+                ctx['message'] = 'Przekroczono limit kalorii'
             return TemplateResponse(request, 'main_app/plan_details.html', ctx)
+
+
+class MealDelete(LoginRequiredMixin, DeleteView):
+    login_url = '/login'
+    model = Meal
+    pk_url_kwarg = Plan.objects.latest('date_modified').pk
+    success_url = f'/plan_details/{pk_url_kwarg}'
+
+    def get_context_data(self, **kwargs):
+        return {'plan': Plan.objects.latest('date_modified')}
+
+    def get_object(self, queryset=None):
+        return Meal.objects.get(pk=self.kwargs['pk'])
 
 
 class RecipeDetailsView(LoginRequiredMixin, View):
@@ -383,3 +468,5 @@ class RecipeDetailsView(LoginRequiredMixin, View):
             ProductsQuantities.objects.filter(recipe_id=recipe, product_id=product). \
                 update(product_quantity=product_quantity)
             return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
+
+

@@ -36,11 +36,11 @@ class Product(models.Model):
 
 
 class Recipe(models.Model):
-    recipe_name = models.CharField(max_length=100, unique=True)
-    description = models.TextField()
-    preparation_time = models.IntegerField()
-    products = models.ManyToManyField(Product, through='ProductsQuantities')
-    portions = models.IntegerField(default=4)
+    recipe_name = models.CharField(max_length=100, unique=True, verbose_name='Nazwa przepisu')
+    description = models.TextField(verbose_name='Opis przygotowania')
+    preparation_time = models.IntegerField(verbose_name='Czas przygotowania')
+    products = models.ManyToManyField(Product, through='ProductsQuantities', verbose_name='Produkty')
+    portions = models.IntegerField(default=4, verbose_name='Porcje')
     add_date = models.DateField(auto_created=True, auto_now=True)
     edit_date = models.DateField(auto_now_add=True)
 
@@ -52,13 +52,17 @@ class Recipe(models.Model):
                 product_quantity / 100
         return round(calories_calculated, 2)
 
+    @property
+    def portion_calories(self):
+        return round(self.recipe_calories / self.portions, 2)
+
     def __str__(self):
-        return f"{self.recipe_name} ({self.recipe_calories} kcal)"
+        return f"{self.recipe_name} (4 porcje: {self.recipe_calories} kcal)"
 
 
 class Persons(models.Model):
-    name = models.CharField(max_length=100)
-    calories = models.IntegerField()
+    name = models.CharField(max_length=100, verbose_name='Imię')
+    calories = models.IntegerField(verbose_name='Zapotrzebowanie na kalorie')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -66,28 +70,31 @@ class Persons(models.Model):
 
 
 class Plan(models.Model):
-    plan_name = models.CharField(max_length=100)
+    plan_name = models.CharField(max_length=100, verbose_name='Nazwa planu')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    plan_length = models.IntegerField()
-    persons = models.ManyToManyField(Persons)
+    plan_length = models.IntegerField(verbose_name='Długość planu')
+    persons = models.ManyToManyField(Persons, verbose_name='Osoby')
+    date_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.plan_name}"
 
 
 class Meal(models.Model):
-    plan_name = models.ManyToManyField(Plan)
-    plan_day = models.IntegerField()
-    meal = models.IntegerField(choices=MEALS, null=True)
-    recipes = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    plan_name = models.ManyToManyField(Plan, verbose_name='Nazwa planu')
+    plan_day = models.IntegerField(verbose_name='Dzień planu')
+    meal = models.IntegerField(choices=MEALS, null=True, verbose_name='Posiłek')
+    recipes = models.ForeignKey(Recipe, on_delete=models.CASCADE, verbose_name='Przepis')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    meal_portions = models.IntegerField(verbose_name='Porcje')
+    date_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.plan_name}"
 
 
 class ProductsQuantities(models.Model):
-    product_quantity = models.FloatField(default=0)
+    product_quantity = models.FloatField(default=0, verbose_name='Ilość produktu')
     recipe_id = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
 

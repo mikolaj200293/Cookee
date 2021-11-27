@@ -7,7 +7,8 @@
     {% for plan in plans %}
         <li>
             <a href="{% url 'plan-details' plan.id %}">{{ plan.plan_name }}</a>
-            <p>Czas trwania: {{ plan.plan_length }} dni</p>
+            <p>Czas trwania: {{ plan.plan_length }} dni <a href="{% url 'edit-plan' plan.id %}">Edytuj</a>
+            <a href="{% url 'delete-plan' plan.id %}">Usuń</a></p>
         </li>
     {% endfor %}
     </ul>

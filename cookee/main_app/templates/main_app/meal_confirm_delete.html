@@ -1,7 +1,7 @@
 {% extends 'main_app/base.html' %}
 
 {% block header %}
-    <h2>Usuń produkt</h2>
+    <h2>Usuń posiłek</h2>
 {% endblock %}
 {% block content %}
     <p>Jesteś pewien?</p>
@@ -10,5 +10,5 @@
     {{ form.as_p }}
     <input type="submit" value="Usuń">
     </form>
-    <div><a href="{% url 'products' %}"><button>Cofnij</button></a></div>
+    <div><a href="{% url 'plan-details' plan.id %}">Cofnij</a></div>
 {% endblock %}

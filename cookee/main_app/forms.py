@@ -26,6 +26,11 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         exclude = ['add_date']
+        widgets = {
+            'proteins': forms.NumberInput(attrs={'step': "0.1"}),
+            'carbohydrates': forms.NumberInput(attrs={'step': "0.1"}),
+            'fats': forms.NumberInput(attrs={'step': "0.1"}),
+        }
 
 
 class RecipeForm(forms.ModelForm):
@@ -51,9 +56,7 @@ class MealForm(forms.ModelForm):
         model = Meal
         exclude = ['plan_name', 'user']
 
-    plan_day = forms.IntegerField(min_value=1)
-    portions = forms.IntegerField(min_value=1)
-
+    plan_day = forms.IntegerField(min_value=1, label='Dzień planu')
 
 
 class QuantitiesForm(forms.ModelForm):
@@ -64,3 +67,7 @@ class QuantitiesForm(forms.ModelForm):
     field_order = ['product_id', 'product_quantity']
 
 
+class PersonsForm(forms.ModelForm):
+    class Meta:
+        model = Persons
+        exclude = ['user']

@@ -15,13 +15,14 @@
         <ul>Dzień {{ day }}
             {% for day_calories in days_calories %}
             {% if forloop.counter == day %}
-            {{ day_calories }} kcal
+            ({{ day_calories }} kcal)
             {% endif %}
             {% endfor %}
-            {% for meal in meals %}
+            {% for meal in meals.all|dictsort:"meal" %}
                 {% if meal.plan_day == day %}
                     <li>
-                        {{ meal.get_meal_display }}: {{ meal.recipes }}
+                        {{ meal.get_meal_display }}: {{ meal.recipes }}, Ilość porcji: {{ meal.meal_portions }}
+                        <a href="{% url 'delete-meal' meal.id %}">Usuń</a>
                     </li>
                 {% endif %}
             {% endfor %}
@@ -34,7 +35,7 @@
     <form action="" method="post">
         {% csrf_token %}
         {{ form }}
-        <input type="submit" value="Dodaj">
+        <input type="submit" value="Zapisz">
     </form>
 {#    {% for meal in meals %}#}
 {#    <div>Dzień: {{ meal.plan_day }}, Posiłek: {{ meal.get_meal_display }}{{ meal.recipes }}{{ meal.recipes.calories }}</div>#}
