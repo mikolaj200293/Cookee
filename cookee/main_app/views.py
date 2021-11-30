@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import *
 from django import forms
 from main_app.validators import *
+from django.db.models import F
 
 
 class HomeView(View):
@@ -475,14 +476,26 @@ class ShoppingListCreate(LoginRequiredMixin, View):
     def get(self, request, plan_id):
         plan = Plan.objects.get(pk=plan_id)
         meals = plan.meal_set.all()
-        categories = ProductCategory.objects.all()
-        recipes_products = [(meal.recipes.productsquantities_set.all(), meal.meal_portions) for meal in meals]
-        shopping_list = {'categories': {}}
-        for products in recipes_products:
-            for product in products[0]:
-                # print(product.product_id.category, product.product_id, product.one_portion_product_quantity * products[1])
-                if product.product_id.category.category_name not in shopping_list['categories']:
-                    shopping_list['categories'].update({product.product_id.category.category_name: []})
-        print(shopping_list)
+        print(meals)
+        for meal in meals:
+            for product in meal.recipes.productsquantities_set.all():
+                if not ShoppingList.objects.filter(plan=plan, product=product.product_id):
+                    instance = ShoppingList.objects.create(plan=plan, product_quantity=product.one_portion_product_quantity * meal.meal_portions, product=product.product_id)
+                else:
+                    ShoppingList.objects.get(plan=plan,
+                                             product=product.product_id).product_quantity = F('product_quantity') + product.one_portion_product_quantity * meal.meal_portions
+        # categories = ProductCategory.objects.all())
+        # recipes_products = [(meal.recipes.productsquantities_set.all(), meal.meal_portions) for meal in meals]
+        # shopping_list = {}
+        # for products in recipes_products:
+        #     for product in products[0]:
+        #         # print(product.product_id.category, product.product_id, product.one_portion_product_quantity * products[1])
+        #         if product.product_id.category.category_name not in shopping_list:
+        #             shopping_list.update({product.product_id.category.category_name: []})
+        #     for product in products[0]:
+        #         shopping_list[product.product_id.category.category_name].append(product.product_id)
+        # for product in shopping_list.items():
+        #     # print(product)
+
 
 

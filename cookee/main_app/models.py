@@ -102,3 +102,9 @@ class ProductsQuantities(models.Model):
     def one_portion_product_quantity(self):
         result = self.product_quantity / self.recipe_id.portions
         return result
+
+
+class ShoppingList(models.Model):
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_quantity = models.FloatField(default=0)
