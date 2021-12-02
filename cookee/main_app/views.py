@@ -340,6 +340,7 @@ class PlanUpdate(LoginRequiredMixin, UpdateView):
     #     form.fields['persons'].widget = forms.CheckboxSelectMultiple()
     #     return form
 
+
 def calculate_days_calories(plan):
     days_calories_list = []
     for day in range(1, plan.plan_length + 1):
@@ -410,7 +411,8 @@ class PlanDetailsView(LoginRequiredMixin, View):
             elif meal_object.exists() and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
             elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
-                instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
+                instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes,
+                                               meal_portions=portions)
                 instance.plan_name.add(plan_id)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
@@ -440,13 +442,14 @@ class RecipeDetailsView(LoginRequiredMixin, View):
         form = QuantitiesForm()
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
+        recipe_products_quantities = recipe.productsquantities_set.all()
         form.fields['product_id'].queryset = recipe_products
-        if recipe_products:
-            form.initial = {'product_id': recipe_products[0]}
+        if recipe_products_quantities:
+            form.initial = {'product_id': recipe_products_quantities[0]}
         ctx = {
             'form': form,
             'recipe': recipe,
-            'products': recipe_products
+            'products': recipe_products_quantities
         }
         return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
 
@@ -454,13 +457,14 @@ class RecipeDetailsView(LoginRequiredMixin, View):
         form = QuantitiesForm(request.POST)
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
+        recipe_products_quantities = recipe.productsquantities_set.all()
         form.fields['product_id'].queryset = recipe_products
         if recipe_products:
             form.initial = {'product_id': recipe_products[0]}
         ctx = {
             'form': form,
             'recipe': recipe,
-            'products': recipe_products
+            'products': recipe_products_quantities
         }
         if form.is_valid():
             recipe = Recipe.objects.get(pk=recipe_id)
@@ -476,26 +480,34 @@ class ShoppingListCreate(LoginRequiredMixin, View):
     def get(self, request, plan_id):
         plan = Plan.objects.get(pk=plan_id)
         meals = plan.meal_set.all()
-        print(meals)
+        ShoppingList.objects.create(name=f'Lista zakupów plan {plan.plan_name}', plan=plan)
+        shopping_list = ShoppingList.objects.latest('date_created')
         for meal in meals:
             for product in meal.recipes.productsquantities_set.all():
-                if not ShoppingList.objects.filter(plan=plan, product=product.product_id):
-                    instance = ShoppingList.objects.create(plan=plan, product_quantity=product.one_portion_product_quantity * meal.meal_portions, product=product.product_id)
+                if not ShoppingListProducts.objects.filter(shopping_list=shopping_list.id, product=product.product_id):
+                    ShoppingListProducts.objects.create(shopping_list=shopping_list,
+                                                        product_quantity=product.one_portion_product_quantity
+                                                                         * meal.meal_portions,
+                                                        product=product.product_id)
                 else:
-                    ShoppingList.objects.get(plan=plan,
-                                             product=product.product_id).product_quantity = F('product_quantity') + product.one_portion_product_quantity * meal.meal_portions
-        # categories = ProductCategory.objects.all())
-        # recipes_products = [(meal.recipes.productsquantities_set.all(), meal.meal_portions) for meal in meals]
-        # shopping_list = {}
-        # for products in recipes_products:
-        #     for product in products[0]:
-        #         # print(product.product_id.category, product.product_id, product.one_portion_product_quantity * products[1])
-        #         if product.product_id.category.category_name not in shopping_list:
-        #             shopping_list.update({product.product_id.category.category_name: []})
-        #     for product in products[0]:
-        #         shopping_list[product.product_id.category.category_name].append(product.product_id)
-        # for product in shopping_list.items():
-        #     # print(product)
+                    ShoppingListProducts.objects.filter(shopping_list=shopping_list.id,
+                                                product=product.product_id).update(product_quantity=F(
+                        'product_quantity') + product.one_portion_product_quantity * meal.meal_portions)
+        shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
+        ctx = {
+            'shopping_list': shopping_list_products
+        }
+        return TemplateResponse(request, 'main_app/shopping_list.html', ctx)
 
 
+class ShoppingListDelete(LoginRequiredMixin, DeleteView):
+    login_url = '/login'
+    model = ShoppingList
+    pk_url_kwarg = ShoppingList.objects.latest('date_created').plan.pk
+    success_url = f'/shopping_list/plan/{pk_url_kwarg}'
 
+    def get_context_data(self, **kwargs):
+        return {'plan': ShoppingList.objects.latest('date_created').plan.pk}
+
+    def get_object(self, queryset=None):
+        return ShoppingList.objects.get(pk=self.kwargs['pk'])

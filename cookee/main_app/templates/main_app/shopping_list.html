@@ -1,18 +1,21 @@
 {% extends 'main_app/base.html' %}
 {% block header %}
-    <h2>Lista zakupów plany</h2>
+    <h2>Lista zakupów</h2>
 {% endblock %}
 {% block content %}
     <ul>
-    {% for plan in plans %}
-        <li>
-            <a href="{% url 'plan-details' plan.id %}">{{ plan.plan_name }}</a>
-            <p>Czas trwania: {{ plan.plan_length }} dni <a href="{% url 'edit-plan' plan.id %}">Edytuj</a>
-            <a href="{% url 'delete-plan' plan.id %}">Usuń</a></p>
+    {% for category in shopping_list %}
+        <div>{{ category.product.category }}</div>
+        {% for product in shopping_list %}
+            {% if product.product.category == category.product.category %}
+        <li>{{ product.product }}, {{ product.product_quantity }}g, {{ product.product.category }}
+{#        <a href="{% url 'edit-plan' plan.id %}">Edytuj</a>#}
+{#            <a href="{% url 'delete-shopping-list' product.id %}">Usuń</a></p>#}
         </li>
+            {% endif %}
     {% endfor %}
-    </ul>
-    <div><a href="{% url 'add-plan' %}">Dodaj plan</a></div>
+    {% endfor %}
+        </ul>
 {% endblock %}
 {% block footer %}
 {% endblock %}

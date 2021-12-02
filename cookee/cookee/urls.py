@@ -36,6 +36,7 @@ urlpatterns = [
     path('delete_meal/<pk>', MealDelete.as_view(), name='delete-meal'),
     path('delete_plan/<pk>', PlanDelete.as_view(), name='delete-plan'),
     path('delete_person/<pk>', PersonDelete.as_view(), name='delete-person'),
+    path('delete_shopping_list/<pk>', ShoppingListDelete.as_view(), name='delete-shopping-list'),
     path('edit_product/<int:product_id>', ProductUpdate.as_view(), name='edit-product'),
     path('edit_recipe/<int:recipe_id>', RecipeUpdate.as_view(), name='edit-recipe'),
     path('edit_person/<int:person_id>', PersonUpdate.as_view(), name='edit-person'),

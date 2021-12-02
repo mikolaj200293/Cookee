@@ -3,7 +3,7 @@
     <ul>
         <li>{{ recipe.recipe_name }}:
         {% for product in products %}
-        {{ product.product_name }} {{ product.productsquantities_set.get.product_quantity }}g
+        {{ product.product_id }} {{ product.product_quantity }}g
     {% endfor %} {{ recipe.recipe_calories }}kcal</li>
     </ul>
 {% endblock %}

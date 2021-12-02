@@ -48,7 +48,7 @@ class Recipe(models.Model):
     def recipe_calories(self):
         calories_calculated = 0
         for product in self.products.all():
-            calories_calculated += product.calories * product.productsquantities_set.get(product_id=product.id).\
+            calories_calculated += product.calories * product.productsquantities_set.get(product_id=product.id, recipe_id=self.pk).\
                 product_quantity / 100
         return round(calories_calculated, 2)
 
@@ -106,5 +106,12 @@ class ProductsQuantities(models.Model):
 
 class ShoppingList(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through='ShoppingListProducts')
+    date_created = models.DateTimeField(auto_created=True, auto_now=True)
+    name = models.CharField(max_length=100)
+
+
+class ShoppingListProducts(models.Model):
     product_quantity = models.FloatField(default=0)
+    shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
