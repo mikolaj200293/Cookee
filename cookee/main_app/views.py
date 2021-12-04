@@ -1,18 +1,19 @@
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.views import View
-from django.views.generic import FormView
-from .models import *
-from .forms import *
-from django.views.generic import *
+from main_app.models import Product, Recipe, Persons, Plan, Meal, ProductsQuantities, ShoppingList, \
+    ShoppingListProducts
+from main_app.forms import LoginForm, AddUserForm, ProductForm, RecipeForm, PlanForm, MealForm, \
+    QuantitiesForm, PersonsForm
+from django.views.generic import DeleteView, UpdateView
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.mixins import *
-from django import forms
-from main_app.validators import *
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
 
 
 class HomeView(View):
@@ -52,7 +53,8 @@ class LoginView(View):
             else:
                 ctx['message'] = 'Błędne dane logowania'
                 return TemplateResponse(request, 'main_app/login_form.html', ctx)
-        return render(request, "main_app/login_form.html", ctx)
+        else:
+            return TemplateResponse(request, 'main_app/login_form.html', ctx)
 
 
 class LogoutView(View):
@@ -101,6 +103,8 @@ class AddUserView(View):
                 ctx['message'] = 'Dodano użytkownika'
                 login(request, user)
                 return redirect('home')
+        else:
+            return TemplateResponse(request, 'main_app/add_user_form.html', ctx)
 
 
 class ProductsView(View):
@@ -163,6 +167,8 @@ class PersonCreate(LoginRequiredMixin, View):
             persons = Persons.objects.all()
             ctx['persons'] = persons
             return TemplateResponse(request, 'main_app/persons.html', ctx)
+        else:
+            return TemplateResponse(request, 'main_app/persons.html', ctx)
 
 
 class PersonDelete(LoginRequiredMixin, DeleteView):
@@ -214,6 +220,8 @@ class RecipeCreate(LoginRequiredMixin, View):
             ctx['recipe'] = instance
             recipe_id = instance.pk
             return redirect(reverse('recipe-details', kwargs={"recipe_id": recipe_id}), ctx)
+        else:
+            return TemplateResponse(request, 'main_app/add_recipe_form.html', ctx)
 
 
 class RecipeDelete(LoginRequiredMixin, DeleteView):
@@ -264,6 +272,8 @@ class ProductCreate(LoginRequiredMixin, View):
             products = Product.objects.all()
             ctx['products'] = products
             return TemplateResponse(request, 'main_app/products.html', ctx)
+        else:
+            return TemplateResponse(request, 'main_app/products.html', ctx)
 
 
 class ProductDelete(LoginRequiredMixin, DeleteView):
@@ -313,6 +323,8 @@ class PlanCreate(LoginRequiredMixin, View):
             plans = Plan.objects.all()
             ctx['plans'] = plans
             return TemplateResponse(request, 'main_app/plans.html', ctx)
+        else:
+            return TemplateResponse(request, 'main_app/plans.html', ctx)
 
 
 class PlanDelete(LoginRequiredMixin, DeleteView):
@@ -334,11 +346,6 @@ class PlanUpdate(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("plans")
-
-    # def get_form(self, form_class=PlanForm):
-    #     form = super().get_form(form_class)
-    #     form.fields['persons'].widget = forms.CheckboxSelectMultiple()
-    #     return form
 
 
 def calculate_days_calories(plan):
@@ -419,19 +426,21 @@ class PlanDetailsView(LoginRequiredMixin, View):
             elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
             return TemplateResponse(request, 'main_app/plan_details.html', ctx)
+        else:
+            return TemplateResponse(request, 'main_app/plan_details.html', ctx)
 
 
-class MealDelete(LoginRequiredMixin, DeleteView):
-    login_url = '/login'
-    model = Meal
-    pk_url_kwarg = Plan.objects.latest('date_modified').pk
-    success_url = f'/plan_details/{pk_url_kwarg}'
-
-    def get_context_data(self, **kwargs):
-        return {'plan': Plan.objects.latest('date_modified')}
-
-    def get_object(self, queryset=None):
-        return Meal.objects.get(pk=self.kwargs['pk'])
+# class MealDelete(LoginRequiredMixin, DeleteView):
+#     login_url = '/login'
+#     model = Meal
+#     pk_url_kwarg = Plan.objects.latest('date_modified').pk
+#     success_url = f'/plan_details/{pk_url_kwarg}'
+#
+#     def get_context_data(self, **kwargs):
+#         return {'plan': Plan.objects.latest('date_modified')}
+#
+#     def get_object(self, queryset=None):
+#         return Meal.objects.get(pk=self.kwargs['pk'])
 
 
 class RecipeDetailsView(LoginRequiredMixin, View):
@@ -473,6 +482,8 @@ class RecipeDetailsView(LoginRequiredMixin, View):
             ProductsQuantities.objects.filter(recipe_id=recipe, product_id=product). \
                 update(product_quantity=product_quantity)
             return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
+        else:
+            return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
 
 
 class ShoppingListCreate(LoginRequiredMixin, View):
@@ -491,23 +502,52 @@ class ShoppingListCreate(LoginRequiredMixin, View):
                                                         product=product.product_id)
                 else:
                     ShoppingListProducts.objects.filter(shopping_list=shopping_list.id,
-                                                product=product.product_id).update(product_quantity=F(
+                                                        product=product.product_id).update(product_quantity=F(
                         'product_quantity') + product.one_portion_product_quantity * meal.meal_portions)
         shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
+        product_categories = []
+        for product in shopping_list_products:
+            if product.product.category.category_name not in product_categories:
+                product_categories.append(product.product.category.category_name)
         ctx = {
-            'shopping_list': shopping_list_products
+            'shopping_list': shopping_list_products,
+            'categories': product_categories
         }
         return TemplateResponse(request, 'main_app/shopping_list.html', ctx)
 
 
-class ShoppingListDelete(LoginRequiredMixin, DeleteView):
-    login_url = '/login'
-    model = ShoppingList
-    pk_url_kwarg = ShoppingList.objects.latest('date_created').plan.pk
-    success_url = f'/shopping_list/plan/{pk_url_kwarg}'
+class ShoppingListPdf(LoginRequiredMixin, View):
 
-    def get_context_data(self, **kwargs):
-        return {'plan': ShoppingList.objects.latest('date_created').plan.pk}
+    def get(self, request):
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer)
+        shopping_list = ShoppingList.objects.latest('date_created')
+        shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
+        product_categories = []
+        for product in shopping_list_products:
+            if product.product.category.category_name not in product_categories:
+                product_categories.append(product.product.category.category_name)
+        pdf_string = ''
+        for category in product_categories:
+            pdf_string += f'{category}\n'
+            for product in shopping_list_products:
+                if product.product.category.category_name == category:
+                    pdf_string += f'{product.product.product_name}, {product.product_quantity}g\n'
+        p.drawString(100, 100, f'{pdf_string}')
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename='lista zakupów.pdf')
 
-    def get_object(self, queryset=None):
-        return ShoppingList.objects.get(pk=self.kwargs['pk'])
+
+# class ShoppingListDelete(LoginRequiredMixin, DeleteView):
+#     login_url = '/login'
+#     model = ShoppingList
+#     pk_url_kwarg = ShoppingList.objects.latest('date_created').plan.pk
+#     success_url = f'/shopping_list/plan/{pk_url_kwarg}'
+#
+#     def get_context_data(self, **kwargs):
+#         return {'plan': ShoppingList.objects.latest('date_created').plan.pk}
+#
+#     def get_object(self, queryset=None):
+#         return ShoppingList.objects.get(pk=self.kwargs['pk'])

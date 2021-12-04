@@ -4,13 +4,11 @@
 {% endblock %}
 {% block content %}
     <ul>
-    {% for category in shopping_list %}
-        <div>{{ category.product.category }}</div>
+    {% for category in categories %}
+        <div>{{ category }}</div>
         {% for product in shopping_list %}
-            {% if product.product.category == category.product.category %}
+            {% if product.product.category.category_name == category %}
         <li>{{ product.product }}, {{ product.product_quantity }}g, {{ product.product.category }}
-{#        <a href="{% url 'edit-plan' plan.id %}">Edytuj</a>#}
-{#            <a href="{% url 'delete-shopping-list' product.id %}">Usuń</a></p>#}
         </li>
             {% endif %}
     {% endfor %}
@@ -18,4 +16,5 @@
         </ul>
 {% endblock %}
 {% block footer %}
+    <div><a href="{% url 'shopping-list-pdf' %}"><button>Zapisz do pdf</button></a></div>
 {% endblock %}
