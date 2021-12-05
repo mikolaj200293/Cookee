@@ -14,6 +14,11 @@ from django.db.models import F
 import io
 from django.http import FileResponse
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
 
 
 class HomeView(View):
@@ -213,6 +218,7 @@ class RecipeCreate(LoginRequiredMixin, View):
             description = form.cleaned_data['description']
             preparation_time = form.cleaned_data['preparation_time']
             products = form.cleaned_data['products']
+            print(products)
             portions = form.cleaned_data['portions']
             instance = Recipe.objects.create(recipe_name=recipe_name, description=description,
                                              preparation_time=preparation_time, portions=portions)
@@ -391,7 +397,7 @@ class PlanDetailsView(LoginRequiredMixin, View):
         meals = plan.meal_set.all()
         calories = 0
         for person in persons:
-            calories += float(person.calories)
+            calories += person.calories
         plan_days = [day for day in range(1, plan.plan_length + 1)]
         days_calories_list = calculate_days_calories(plan)
         ctx = {
@@ -430,17 +436,37 @@ class PlanDetailsView(LoginRequiredMixin, View):
             return TemplateResponse(request, 'main_app/plan_details.html', ctx)
 
 
-# class MealDelete(LoginRequiredMixin, DeleteView):
+class MealDelete(LoginRequiredMixin, DeleteView):
+    login_url = '/login'
+    success_url = '/plans'
+    model = Meal
+
+    def get_success_url(self):
+        meal = Meal.objects.get(pk=self.kwargs['pk']).pk
+        plan = Plan.objects.get(meal=meal)
+        return f'/plan_details/{plan.pk}'
+
+    def get_context_data(self, **kwargs):
+        meal = Meal.objects.get(pk=self.kwargs['pk']).pk
+        return {'plan': Plan.objects.get(meal=meal)}
+
+    def get_object(self, queryset=None):
+        return Meal.objects.get(pk=self.kwargs['pk'])
+
+
+# class MealUpdate(LoginRequiredMixin, UpdateView):
 #     login_url = '/login'
+#     form_class = MealForm
 #     model = Meal
-#     pk_url_kwarg = Plan.objects.latest('date_modified').pk
-#     success_url = f'/plan_details/{pk_url_kwarg}'
+#     template_name_suffix = '_update_form'
 #
-#     def get_context_data(self, **kwargs):
-#         return {'plan': Plan.objects.latest('date_modified')}
+#     def get_success_url(self):
+#         meal = Meal.objects.get(pk=self.kwargs['meal_id']).pk
+#         plan = Plan.objects.get(meal=meal)
+#         return f'/plan_details/{plan.pk}'
 #
 #     def get_object(self, queryset=None):
-#         return Meal.objects.get(pk=self.kwargs['pk'])
+#         return Meal.objects.get(pk=self.kwargs['meal_id'])
 
 
 class RecipeDetailsView(LoginRequiredMixin, View):
@@ -495,15 +521,17 @@ class ShoppingListCreate(LoginRequiredMixin, View):
         shopping_list = ShoppingList.objects.latest('date_created')
         for meal in meals:
             for product in meal.recipes.productsquantities_set.all():
-                if not ShoppingListProducts.objects.filter(shopping_list=shopping_list.id, product=product.product_id):
+                if not ShoppingListProducts.objects.filter(shopping_list=shopping_list.id,
+                                                           product=product.product_id):
                     ShoppingListProducts.objects.create(shopping_list=shopping_list,
-                                                        product_quantity=product.one_portion_product_quantity
-                                                                         * meal.meal_portions,
+                                                        product_quantity=
+                                                        product.one_portion_product_quantity * meal.meal_portions,
                                                         product=product.product_id)
                 else:
                     ShoppingListProducts.objects.filter(shopping_list=shopping_list.id,
-                                                        product=product.product_id).update(product_quantity=F(
-                        'product_quantity') + product.one_portion_product_quantity * meal.meal_portions)
+                                                        product=product.product_id).\
+                        update(product_quantity=F('product_quantity') + product.
+                               one_portion_product_quantity * meal.meal_portions)
         shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
         product_categories = []
         for product in shopping_list_products:
@@ -521,6 +549,8 @@ class ShoppingListPdf(LoginRequiredMixin, View):
     def get(self, request):
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
+        p.setFont('Arial', 14)
+        textobject = p.beginText(2 * cm, 29.7 * cm - 2 * cm)
         shopping_list = ShoppingList.objects.latest('date_created')
         shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
         product_categories = []
@@ -533,21 +563,11 @@ class ShoppingListPdf(LoginRequiredMixin, View):
             for product in shopping_list_products:
                 if product.product.category.category_name == category:
                     pdf_string += f'{product.product.product_name}, {product.product_quantity}g\n'
-        p.drawString(100, 100, f'{pdf_string}')
+        for line in pdf_string.splitlines(False):
+            textobject.textLine(line.rstrip())
+        p.drawText(textobject)
         p.showPage()
         p.save()
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename='lista zakupów.pdf')
 
-
-# class ShoppingListDelete(LoginRequiredMixin, DeleteView):
-#     login_url = '/login'
-#     model = ShoppingList
-#     pk_url_kwarg = ShoppingList.objects.latest('date_created').plan.pk
-#     success_url = f'/shopping_list/plan/{pk_url_kwarg}'
-#
-#     def get_context_data(self, **kwargs):
-#         return {'plan': ShoppingList.objects.latest('date_created').plan.pk}
-#
-#     def get_object(self, queryset=None):
-#         return ShoppingList.objects.get(pk=self.kwargs['pk'])

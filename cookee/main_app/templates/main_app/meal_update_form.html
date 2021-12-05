@@ -1,0 +1,12 @@
+{% extends 'main_app/base.html' %}
+
+{% block header %}
+    <h2>Edytuj posiłek</h2>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Zapisz">
+    </form>
+{% endblock %}

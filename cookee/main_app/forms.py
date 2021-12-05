@@ -26,11 +26,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         exclude = ['add_date']
-        widgets = {
-            'proteins': forms.NumberInput(attrs={'step': "0.1"}),
-            'carbohydrates': forms.NumberInput(attrs={'step': "0.1"}),
-            'fats': forms.NumberInput(attrs={'step': "0.1"}),
-        }
+        localized_fields = '__all__'
 
 
 class RecipeForm(forms.ModelForm):
@@ -40,6 +36,7 @@ class RecipeForm(forms.ModelForm):
         widgets = {
             'products': forms.CheckboxSelectMultiple,
         }
+        localized_fields = '__all__'
 
 
 class PlanForm(forms.ModelForm):
@@ -49,6 +46,7 @@ class PlanForm(forms.ModelForm):
         widgets = {
             'persons': forms.CheckboxSelectMultiple,
         }
+        localized_fields = '__all__'
 
 
 class MealForm(forms.ModelForm):
@@ -57,6 +55,7 @@ class MealForm(forms.ModelForm):
         exclude = ['plan_name', 'user']
 
     plan_day = forms.IntegerField(min_value=1, label='Dzień planu')
+    localized_fields = '__all__'
 
 
 class QuantitiesForm(forms.ModelForm):
@@ -65,9 +64,11 @@ class QuantitiesForm(forms.ModelForm):
         exclude = ['recipe_id']
 
     field_order = ['product_id', 'product_quantity']
+    localized_fields = '__all__'
 
 
 class PersonsForm(forms.ModelForm):
     class Meta:
         model = Persons
         exclude = ['user']
+        localized_fields = '__all__'

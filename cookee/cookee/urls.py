@@ -15,7 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from main_app.views import *
+from main_app.views import HomeView, LoginView, LogoutView, AddUserView, ProductsView, RecipesView, PlansView,\
+    PersonsView, RecipeCreate, ProductCreate, PersonCreate, PlanCreate, ProductDelete, RecipeDelete, MealDelete,\
+    PlanDelete, PersonDelete, ProductUpdate, RecipeUpdate, PersonUpdate, PlanUpdate, PlanDetailsView,\
+    RecipeDetailsView, ShoppingListCreate, ShoppingListPdf
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,7 +36,7 @@ urlpatterns = [
     path('add_plan', PlanCreate.as_view(), name='add-plan'),
     path('delete_product/<pk>', ProductDelete.as_view(), name='delete-product'),
     path('delete_recipe/<pk>', RecipeDelete.as_view(), name='delete-recipe'),
-    # path('delete_meal/<pk>', MealDelete.as_view(), name='delete-meal'),
+    path('delete_meal/<pk>', MealDelete.as_view(), name='delete-meal'),
     path('delete_plan/<pk>', PlanDelete.as_view(), name='delete-plan'),
     path('delete_person/<pk>', PersonDelete.as_view(), name='delete-person'),
     # path('delete_shopping_list/<pk>', ShoppingListDelete.as_view(), name='delete-shopping-list'),
@@ -41,6 +44,7 @@ urlpatterns = [
     path('edit_recipe/<int:recipe_id>', RecipeUpdate.as_view(), name='edit-recipe'),
     path('edit_person/<int:person_id>', PersonUpdate.as_view(), name='edit-person'),
     path('edit_plan/<int:plan_id>', PlanUpdate.as_view(), name='edit-plan'),
+    # path('edit_meal/<int:meal_id>', MealUpdate.as_view(), name='edit-meal'),
     path('plan_details/<int:plan_id>', PlanDetailsView.as_view(), name='plan-details'),
     path('recipe_details/<int:recipe_id>', RecipeDetailsView.as_view(), name='recipe-details'),
     path('shopping_list/plan/<int:plan_id>', ShoppingListCreate.as_view(), name='shopping-list'),

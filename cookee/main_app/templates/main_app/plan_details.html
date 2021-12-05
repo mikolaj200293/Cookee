@@ -5,28 +5,30 @@
         <li>{{ plan.plan_length }} dni</li>
         <li>Osoby:</li>
         {% for person in persons %}
-        <li>{{ person.name }}</li>
+        <div>{{ person.name }}</div>
         {% endfor %}
         <li>Zapotrzebowanie: {{ calories }}kcal</li>
     </ul>
 {% endblock %}
 {% block content %}
     {% for day in plan_days %}
-        <ul>Dzień {{ day }}
+        <ol>Dzień {{ day }}
             {% for day_calories in days_calories %}
             {% if forloop.counter == day %}
             ({{ day_calories }} kcal)
             {% endif %}
             {% endfor %}
+            <a href="">Dopełnij kalorie</a>
             {% for meal in meals.all|dictsort:"meal" %}
                 {% if meal.plan_day == day %}
                     <li>
-                        {{ meal.get_meal_display }}: {{ meal.recipes }}, Ilość porcji: {{ meal.meal_portions }}
+                        {{ meal.get_meal_display }}: {{ meal.recipes }}, Ilość porcji: {{ meal.meal_portions }} ({{ meal.meal_calories }}kcal)
                         <a href="{% url 'delete-meal' meal.id %}">Usuń</a>
+{#                        <a href="{% url 'edit-meal' meal.id %}">Edytuj</a>#}
                     </li>
                 {% endif %}
             {% endfor %}
-        </ul>
+        </ol>
     {% endfor %}
     <div>{{ message }}</div>
     <div><a href="{% url 'shopping-list' plan.id %}"><button>Wygeneruj listę zakupów</button></a></div>
