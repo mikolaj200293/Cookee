@@ -7,7 +7,7 @@
         {% for person in persons %}
         <div>{{ person.name }}</div>
         {% endfor %}
-        <li>Zapotrzebowanie: {{ calories }}kcal</li>
+        <li>Zapotrzebowanie: {{ plan.plan_calories }}kcal</li>
     </ul>
 {% endblock %}
 {% block content %}
@@ -18,13 +18,12 @@
             ({{ day_calories }} kcal)
             {% endif %}
             {% endfor %}
-            <a href="">Dopełnij kalorie</a>
             {% for meal in meals.all|dictsort:"meal" %}
                 {% if meal.plan_day == day %}
                     <li>
-                        {{ meal.get_meal_display }}: {{ meal.recipes }}, Ilość porcji: {{ meal.meal_portions }} ({{ meal.meal_calories }}kcal)
+                        {{ meal.get_meal_display }}: {{ meal.recipes }}, Ilość porcji: {{ meal.meal_portions }}
+                        ({{ meal.meal_calories }}kcal) <a href="{% url 'fill-calories' plan.id day meal.meal%}">Dopełnij kalorie</a>
                         <a href="{% url 'delete-meal' meal.id %}">Usuń</a>
-{#                        <a href="{% url 'edit-meal' meal.id %}">Edytuj</a>#}
                     </li>
                 {% endif %}
             {% endfor %}

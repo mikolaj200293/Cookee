@@ -218,7 +218,6 @@ class RecipeCreate(LoginRequiredMixin, View):
             description = form.cleaned_data['description']
             preparation_time = form.cleaned_data['preparation_time']
             products = form.cleaned_data['products']
-            print(products)
             portions = form.cleaned_data['portions']
             instance = Recipe.objects.create(recipe_name=recipe_name, description=description,
                                              preparation_time=preparation_time, portions=portions)
@@ -374,9 +373,6 @@ class PlanDetailsView(LoginRequiredMixin, View):
         plan = Plan.objects.get(pk=plan_id)
         meals = plan.meal_set.all()
         persons = plan.persons.all()
-        calories = 0
-        for person in persons:
-            calories += float(person.calories)
         plan_days = [day for day in range(1, plan.plan_length + 1)]
         days_calories_list = calculate_days_calories(plan)
         ctx = {
@@ -384,7 +380,6 @@ class PlanDetailsView(LoginRequiredMixin, View):
             'plan': plan,
             'persons': persons,
             'meals': meals,
-            'calories': calories,
             'plan_days': plan_days,
             'days_calories': days_calories_list
         }
@@ -395,9 +390,6 @@ class PlanDetailsView(LoginRequiredMixin, View):
         plan = Plan.objects.get(pk=plan_id)
         persons = plan.persons.all()
         meals = plan.meal_set.all()
-        calories = 0
-        for person in persons:
-            calories += person.calories
         plan_days = [day for day in range(1, plan.plan_length + 1)]
         days_calories_list = calculate_days_calories(plan)
         ctx = {
@@ -405,7 +397,6 @@ class PlanDetailsView(LoginRequiredMixin, View):
             'plan': plan,
             'persons': persons,
             'meals': meals,
-            'calories': calories,
             'plan_days': plan_days,
             'days_calories': days_calories_list
         }
@@ -417,19 +408,19 @@ class PlanDetailsView(LoginRequiredMixin, View):
             user = request.user
             meal_object = Meal.objects.filter(user=user, plan_name=plan, plan_day=plan_day, meal=meal)
             meal_calories = recipes.portion_calories * portions
-            if meal_object.exists() and calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+            if meal_object.exists() and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
                 meal_object.update(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
-            elif meal_object.exists() and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
+            elif meal_object.exists() and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
-            elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+            elif not meal_object and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
                 instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes,
                                                meal_portions=portions)
                 instance.plan_name.add(plan_id)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
-            elif not meal_object and calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
+            elif not meal_object and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
             return TemplateResponse(request, 'main_app/plan_details.html', ctx)
         else:
@@ -570,4 +561,25 @@ class ShoppingListPdf(LoginRequiredMixin, View):
         p.save()
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename='lista zakupów.pdf')
+
+
+class PlanDayCaloriesCompletion(LoginRequiredMixin, View):
+    login_url = '/login'
+    success_url = '/plans'
+
+    def get(self, request, plan_id, plan_day, day_meal):
+        plan_calories = Plan.objects.get(pk=plan_id).plan_calories
+        plan_meals = Plan.objects.get(pk=plan_id).meal_set.filter(plan_day=plan_day)
+        day_calories = 0
+        for meal in plan_meals:
+            day_calories += meal.meal_calories
+        calories_to_fill = plan_calories - day_calories
+        meal_to_fill = Meal.objects.get(plan_name=plan_id, plan_day=plan_day, meal=day_meal)
+        meal_portion_calories = meal_to_fill.recipes.portion_calories
+        portions_to_fill_quantity = round(calories_to_fill / meal_portion_calories, 1)
+        meal_to_fill.meal_portions += portions_to_fill_quantity
+        meal_to_fill.save()
+        return redirect('plan-details', plan_id=plan_id)
+
+
 

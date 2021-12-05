@@ -1,0 +1,1 @@
+web: gunicorn cookee.wsgi --log-file -

@@ -5,10 +5,10 @@
 {% block content %}
     <ul>
     {% for category in categories %}
-        <div>{{ category }}</div>
+        <p>{{ category }}</p>
         {% for product in shopping_list %}
             {% if product.product.category.category_name == category %}
-        <li>{{ product.product }}, {{ product.product_quantity }}g, {{ product.product.category }}
+        <li>{{ product.product }}, {{ product.product_quantity }}g
         </li>
             {% endif %}
     {% endfor %}

@@ -18,7 +18,7 @@ from django.urls import path
 from main_app.views import HomeView, LoginView, LogoutView, AddUserView, ProductsView, RecipesView, PlansView,\
     PersonsView, RecipeCreate, ProductCreate, PersonCreate, PlanCreate, ProductDelete, RecipeDelete, MealDelete,\
     PlanDelete, PersonDelete, ProductUpdate, RecipeUpdate, PersonUpdate, PlanUpdate, PlanDetailsView,\
-    RecipeDetailsView, ShoppingListCreate, ShoppingListPdf
+    RecipeDetailsView, ShoppingListCreate, ShoppingListPdf, PlanDayCaloriesCompletion
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,4 +49,6 @@ urlpatterns = [
     path('recipe_details/<int:recipe_id>', RecipeDetailsView.as_view(), name='recipe-details'),
     path('shopping_list/plan/<int:plan_id>', ShoppingListCreate.as_view(), name='shopping-list'),
     path('shopping_list/pdf_create', ShoppingListPdf.as_view(), name='shopping-list-pdf'),
+    path('fill_calories/<int:plan_id>/<int:plan_day>/<int:day_meal>', PlanDayCaloriesCompletion.as_view(),
+         name='fill-calories'),
 ]

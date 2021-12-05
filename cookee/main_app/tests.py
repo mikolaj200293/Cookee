@@ -47,7 +47,7 @@ def test_add_person(client):
     assert User.objects.count() == 0
     user = User.objects.create_user(username=faker.first_name(), password='12345')
     assert User.objects.count() == 1
-    client.login(username=user.username, password=user.password)
+    client.force_login(user)
     persons_count = Persons.objects.count()
     assert persons_count == 0
     name = 'Test_person'
@@ -57,7 +57,8 @@ def test_add_person(client):
         'calories': calories
     }
     response = client.post(reverse('add-person'), post_data)
-    assert response.status_code == 302
+    assert response.status_code == 200
+    # assert response.url == ''
     assert Persons.objects.count() == persons_count + 1
     person = Persons.objects.first()
     assert person.name == name
@@ -65,12 +66,24 @@ def test_add_person(client):
 
 
 @pytest.mark.django_db
+def test_delete_person(client):
+    assert User.objects.count() == 0
+    user = User.objects.create_user(username=faker.first_name(), password='12345')
+    assert User.objects.count() == 1
+    client.force_login(user)
+    person = Persons.objects.create(name=faker.first_name(), calories=2000, user=user)
+    assert Persons.objects.count() == 1
+    response = client.post(reverse('delete-person', kwargs={'pk': person.pk}))
+    assert response.status_code == 302
+    assert Persons.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_add_recipe(client, new_three_products):
     assert User.objects.count() == 0
     user = User.objects.create_user(username=faker.first_name(), password='12345')
     assert User.objects.count() == 1
-    client.login(username=user.username, password=user.password)
-    client.request()
+    client.force_login(user)
     recipes_count = Recipe.objects.count()
     assert recipes_count == 0
     recipe_name = 'Test_recipe'
@@ -86,7 +99,7 @@ def test_add_recipe(client, new_three_products):
         'portions': portions
     }
     response = client.post(reverse('add-recipe'), post_data)
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert Recipe.objects.count() == recipes_count + 1
     recipe = Recipe.objects.first()
     assert recipe.recipe_name == recipe_name

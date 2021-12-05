@@ -77,6 +77,13 @@ class Plan(models.Model):
     persons = models.ManyToManyField(Persons, verbose_name='Osoby')
     date_modified = models.DateTimeField(auto_now=True)
 
+    @property
+    def plan_calories(self):
+        result = 0
+        for person in self.persons.all():
+            result += person.calories
+        return result
+
     def __str__(self):
         return f"{self.plan_name}"
 
@@ -100,7 +107,7 @@ class Meal(models.Model):
 
 
 class ProductsQuantities(models.Model):
-    product_quantity = models.DecimalField(default=0, verbose_name='Ilość produktu', decimal_places=2, max_digits=6)
+    product_quantity = models.DecimalField(default=0, verbose_name='Ilość produktu', decimal_places=1, max_digits=5)
     recipe_id = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
 
@@ -118,6 +125,6 @@ class ShoppingList(models.Model):
 
 
 class ShoppingListProducts(models.Model):
-    product_quantity = models.DecimalField(default=0, decimal_places=2, max_digits=6)
+    product_quantity = models.DecimalField(default=0, decimal_places=1, max_digits=5)
     shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

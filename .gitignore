@@ -224,3 +224,4 @@ venv/*
 
 # End of https://www.gitignore.io/api/python,pycharm
 /Cookee/Cookee/local_settings.py
+.env
