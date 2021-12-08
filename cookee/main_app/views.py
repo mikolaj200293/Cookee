@@ -23,7 +23,7 @@ pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
 
 class HomeView(View):
     """
-    Homepage view: shows base.html
+    Homepage view: show base.html
     """
 
     def get(self, request):
@@ -32,10 +32,15 @@ class HomeView(View):
 
 class LoginView(View):
     """
-    Allows to login. In case of wrong login data reports the error.
+    Login user. In case of wrong login data report the error.
     """
 
     def get(self, request):
+        """
+        Redirect to login form.
+        :param request: django request object
+        :return: redirect to login_form.html with LoginForm in context
+        """
         form = LoginForm()
         ctx = {
             'form': form
@@ -43,6 +48,13 @@ class LoginView(View):
         return TemplateResponse(request, 'main_app/login_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate login form. If form is valid authenticate user. If authentication was successful log user in
+        and redirect to home page. If authentication failed show error message and redirect to login page.
+        If login form is not valid stay on login page.
+        :param request: django request object
+        :return: redirect to base.html or to login_form.html with LoginForm and additional data in context
+        """
         form = LoginForm(request.POST)
         ctx = {
             'form': form,
@@ -64,20 +76,30 @@ class LoginView(View):
 
 class LogoutView(View):
     """
-    Allow to logout
+    Logout the user.
     """
 
     def get(self, request):
+        """
+        Logout the user and redirect to home page.
+        :param request: django request object
+        :return: redirect to base.html
+        """
         logout(request)
         return TemplateResponse(request, 'main_app/base.html')
 
 
 class AddUserView(View):
     """
-    Allow to add new user.
+    Add new user.
     """
 
     def get(self, request):
+        """
+        Redirect to user adding form.
+        :param request: django request object
+        :return: redirect to add_user_form.html with AddUserForm in context
+        """
         form = AddUserForm()
         ctx = {
             'form': form
@@ -85,6 +107,13 @@ class AddUserView(View):
         return TemplateResponse(request, 'main_app/add_user_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate user adding form. If form is valid check if user exist and sent passwords are the same.
+        If correct create new User object and log new User in. If form is not valid stay on add_user_form.html
+        :param request: django request object
+        :return: if User object created redirect to home.html else redirect to add_user_form.html with AddUserForm
+        and additional data in context
+        """
         form = AddUserForm(request.POST)
         ctx = {
             'form': form,
@@ -113,7 +142,15 @@ class AddUserView(View):
 
 
 class ProductsView(View):
+    """
+    Show all Product model objects.
+    """
     def get(self, request):
+        """
+        Get all Product model object and send them to products.html in context
+        :param request: django request object
+        :return: redirects to products.html with context data
+        """
         products = Product.objects.all()
         ctx = {
             'products': products
@@ -122,7 +159,15 @@ class ProductsView(View):
 
 
 class RecipesView(View):
+    """
+    Show all Recipe model objects.
+    """
     def get(self, request):
+        """
+        Get all Recipe model object and send them to recipes.html in context
+        :param request: django request object
+        :return: redirect to recipes.html with context data
+        """
         recipes = Recipe.objects.all()
         ctx = {
             'recipes': recipes
@@ -131,7 +176,15 @@ class RecipesView(View):
 
 
 class PlansView(View):
+    """
+    Show all Plan model objects
+    """
     def get(self, request):
+        """
+        Get all Plan model object and send them to plans.html in context
+        :param request: django request object
+        :return: redirect to plans.html with context data
+        """
         plans = Plan.objects.all()
         ctx = {
             'plans': plans
@@ -140,7 +193,15 @@ class PlansView(View):
 
 
 class PersonsView(View):
+    """
+    Show all Persons model objects
+    """
     def get(self, request):
+        """
+        Get all Persons model object and send them to persons.html in context
+        :param request: django request object
+        :return: redirect to persons.html with context data
+        """
         persons = Persons.objects.all()
         ctx = {
             'persons': persons
@@ -149,10 +210,18 @@ class PersonsView(View):
 
 
 class PersonCreate(LoginRequiredMixin, View):
+    """
+    Create new Persons object. Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/persons'
 
     def get(self, request):
+        """
+        Redirect to Persons model object adding form.
+        :param request: django request object
+        :return: redirect to add_person_form.html with PersonsForm in context
+        """
         form = PersonsForm()
         ctx = {
             'form': form
@@ -160,6 +229,13 @@ class PersonCreate(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/add_person_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate PersonsForm. If form is valid create new Persons model object and redirect to persons.html.
+        If form is not valid redirect to add_person_form.html
+        :param request: django request object
+        :return: If Persons object created redirect to persons.html. If Persons object not created redirect
+        to add_person_form.html
+        """
         form = PersonsForm(request.POST)
         ctx = {
             'form': form,
@@ -173,16 +249,22 @@ class PersonCreate(LoginRequiredMixin, View):
             ctx['persons'] = persons
             return TemplateResponse(request, 'main_app/persons.html', ctx)
         else:
-            return TemplateResponse(request, 'main_app/persons.html', ctx)
+            return TemplateResponse(request, 'main_app/add_person_form.html', ctx)
 
 
 class PersonDelete(LoginRequiredMixin, DeleteView):
+    """
+    Delete Persons model object. Require logged-in user. Redirect to /persons.
+    """
     login_url = '/login'
     model = Persons
     success_url = '/persons'
 
 
 class PersonUpdate(LoginRequiredMixin, UpdateView):
+    """
+    Update Persons model object. Require logged-in user. Redirect to /persons.
+    """
     login_url = '/login'
     success_url = '/persons'
 
@@ -191,17 +273,34 @@ class PersonUpdate(LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
+        """
+        Select Persons object to update
+        :param queryset: built-in parameter
+        :return: Persons model object to update
+        """
         return Persons.objects.get(pk=self.kwargs['person_id'])
 
     def get_success_url(self):
+        """
+        Define Url to redirect after Persons model object update
+        :return: Url to redirect after update
+        """
         return reverse("persons")
 
 
 class RecipeCreate(LoginRequiredMixin, View):
+    """
+    Create new Recipe model object. Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/add_recipe'
 
     def get(self, request):
+        """
+        Redirect to Recipe model object adding form.
+        :param request: django request object
+        :return: redirect to add_recipe_form.html with RecipeForm in context
+        """
         form = RecipeForm()
         ctx = {
             'form': form
@@ -209,6 +308,13 @@ class RecipeCreate(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/add_recipe_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate RecipeForm data. If form is valid create new Recipe model object and redirect to recipe_details.html
+        with new recipe object in context. If form is not valid redirect to add_recipe_form.html
+        :param request: django request object
+        :return: If Recipe object model created redirect to recipe_details.html. If Recipe model object not created
+        redirect to add_recipe_form.html
+        """
         form = RecipeForm(request.POST)
         ctx = {
             'form': form
@@ -230,12 +336,18 @@ class RecipeCreate(LoginRequiredMixin, View):
 
 
 class RecipeDelete(LoginRequiredMixin, DeleteView):
+    """
+    Delete Recipe model object. Require logged-in user. Redirect to /recipes.
+    """
     login_url = '/login'
     model = Recipe
     success_url = '/recipes'
 
 
 class RecipeUpdate(LoginRequiredMixin, UpdateView):
+    """
+    Update Recipe model object. Require logged-in user. Redirect to /recipes.
+    """
     login_url = '/login'
     success_url = '/recipes'
 
@@ -244,17 +356,34 @@ class RecipeUpdate(LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
+        """
+        Select Recipe object to update
+        :param queryset: built-in parameter
+        :return: Recipe model object to update
+        """
         return Recipe.objects.get(pk=self.kwargs['recipe_id'])
 
     def get_success_url(self):
+        """
+        Define Url to redirect after Recipe model object update
+        :return: Url to redirect after update
+        """
         return reverse("recipes")
 
 
 class ProductCreate(LoginRequiredMixin, View):
+    """
+    Create new Product model object. Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/add_product'
 
     def get(self, request):
+        """
+        Redirect to Product model object adding form.
+        :param request: django request object
+        :return: redirect to add_product_form.html with ProductForm in context
+        """
         form = ProductForm()
         ctx = {
             'form': form
@@ -262,6 +391,13 @@ class ProductCreate(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/add_product_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate ProductForm data. If form is valid create new Product model object and redirect to products.html
+        with all Recipe model objects in context. If form is not valid redirect to add_product_form.html
+        :param request: django request object
+        :return: If Product model object created redirect to products.html. If Product model object not created redirect
+        to add_recipe_form.html
+        """
         form = ProductForm(request.POST)
         ctx = {
             'form': form,
@@ -278,16 +414,22 @@ class ProductCreate(LoginRequiredMixin, View):
             ctx['products'] = products
             return TemplateResponse(request, 'main_app/products.html', ctx)
         else:
-            return TemplateResponse(request, 'main_app/products.html', ctx)
+            return TemplateResponse(request, 'main_app/add_product_form.html', ctx)
 
 
 class ProductDelete(LoginRequiredMixin, DeleteView):
+    """
+    Delete Product model object. Require logged-in user. Redirect to /products.
+    """
     login_url = '/login'
     model = Product
     success_url = '/products'
 
 
 class ProductUpdate(LoginRequiredMixin, UpdateView):
+    """
+    Update Product model object. Require logged-in user. Redirect to /products.
+    """
     login_url = '/login'
     success_url = '/products'
 
@@ -296,9 +438,18 @@ class ProductUpdate(LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
+        """
+        Select Product object to update
+        :param queryset: built-in parameter
+        :return: Product model object to update
+        """
         return Product.objects.get(pk=self.kwargs['product_id'])
 
     def get_success_url(self):
+        """
+        Define Url to redirect after Product model object update
+        :return: Url to redirect after update
+        """
         return reverse("products")
 
 
@@ -408,11 +559,13 @@ class PlanDetailsView(LoginRequiredMixin, View):
             user = request.user
             meal_object = Meal.objects.filter(user=user, plan_name=plan, plan_day=plan_day, meal=meal)
             meal_calories = recipes.portion_calories * portions
-            if meal_object.exists() and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+            if meal_object.exists() \
+                    and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
                 meal_object.update(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
-            elif meal_object.exists() and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
+            elif meal_object.exists() \
+                    and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
             elif not meal_object and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
                 instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes,
@@ -443,21 +596,6 @@ class MealDelete(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return Meal.objects.get(pk=self.kwargs['pk'])
-
-
-# class MealUpdate(LoginRequiredMixin, UpdateView):
-#     login_url = '/login'
-#     form_class = MealForm
-#     model = Meal
-#     template_name_suffix = '_update_form'
-#
-#     def get_success_url(self):
-#         meal = Meal.objects.get(pk=self.kwargs['meal_id']).pk
-#         plan = Plan.objects.get(meal=meal)
-#         return f'/plan_details/{plan.pk}'
-#
-#     def get_object(self, queryset=None):
-#         return Meal.objects.get(pk=self.kwargs['meal_id'])
 
 
 class RecipeDetailsView(LoginRequiredMixin, View):

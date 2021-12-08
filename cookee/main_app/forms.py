@@ -8,12 +8,12 @@ class LoginForm(forms.Form):
 
 
 class AddUserForm(forms.Form):
-    login = forms.CharField(max_length=100, label='Login')
-    password = forms.CharField(max_length=100, label='Password', widget=forms.PasswordInput)
-    confirm_password = forms.CharField(max_length=100, label='Confirm password', widget=forms.PasswordInput)
-    first_name = forms.CharField(max_length=100, label='First name')
-    last_name = forms.CharField(max_length=100, label='Last name')
-    mail = forms.EmailField(max_length=100, label='Email')
+    login = forms.CharField(max_length=100, label='Nazwa użytkownika')
+    password = forms.CharField(max_length=100, label='Hasło', widget=forms.PasswordInput)
+    confirm_password = forms.CharField(max_length=100, label='Potwierdź hasło', widget=forms.PasswordInput)
+    first_name = forms.CharField(max_length=100, label='Imię')
+    last_name = forms.CharField(max_length=100, label='Nazwisko')
+    mail = forms.EmailField(max_length=100, label='Adres Email')
 
 
 class CategoryForm(forms.ModelForm):

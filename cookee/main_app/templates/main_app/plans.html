@@ -5,11 +5,13 @@
 {% block content %}
     <ul>
     {% for plan in plans %}
+        {% if plan.user == user %}
         <li>
             <a href="{% url 'plan-details' plan.id %}">{{ plan.plan_name }}</a>
             <p>Czas trwania: {{ plan.plan_length }} dni <a href="{% url 'edit-plan' plan.id %}">Edytuj</a>
             <a href="{% url 'delete-plan' plan.id %}">Usuń</a></p>
         </li>
+        {% endif %}
     {% endfor %}
     </ul>
     <div><a href="{% url 'add-plan' %}">Dodaj plan</a></div>

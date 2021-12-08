@@ -40,3 +40,5 @@ def three_new_persons_create():
                                calories=randrange(1000, 4000, 100),
                                user=user)
     return list(Persons.objects.all())
+
+

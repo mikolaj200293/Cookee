@@ -1,6 +1,7 @@
 from random import randrange
 from django.contrib.auth.models import User
 from main_app.models import Recipe, Product
+from main_app.forms import RecipeForm
 from main_app.utils import three_new_products_create
 
 import pytest
@@ -8,6 +9,23 @@ from faker import Faker
 from django.urls import reverse
 from main_app.models import Persons
 faker = Faker('pl_PL')
+
+
+@pytest.mark.django_db
+def test_create_user(client):
+    assert User.objects.count() == 0
+    post_data = {
+        'login': 'Test_user',
+        'password': 'Test_password',
+        'confirm_password': 'Test_password',
+        'first_name': 'Jan',
+        'last_name': 'Kowalski',
+        'mail': 'jan@wp.pl'
+    }
+    response = client.post(reverse('add-user'), post_data)
+    assert response.status_code == 302
+    assert User.objects.count() == 1
+    assert User.objects.first().username == post_data['login']
 
 
 @pytest.mark.django_db
@@ -88,21 +106,65 @@ def test_add_recipe(client, new_three_products):
     assert recipes_count == 0
     recipe_name = 'Test_recipe'
     description = 'Test_description'
-    preparation_time = '30'
+    preparation_time = 30
     products = Product.objects.all()
-    portions = '4'
+    portions = 4.0
     post_data = {
         'recipe_name': recipe_name,
         'description': description,
         'preparation_time': preparation_time,
-        'products': products,
+        'products': (products[1], products[2]),
         'portions': portions
     }
-    response = client.post(reverse('add-recipe'), post_data)
-    assert response.status_code == 200
+    form = RecipeForm(data=post_data)
+    assert form.is_valid()
+    response = client.post('/add_recipe', data=post_data)
+    assert response.status_code == 302
     assert Recipe.objects.count() == recipes_count + 1
     recipe = Recipe.objects.first()
     assert recipe.recipe_name == recipe_name
     assert recipe.description == description
     assert recipe.preparation_time == preparation_time
     assert recipe.products == products
+
+
+@pytest.mark.django_db
+def test_delete_recipe(client, new_three_products):
+    user = User.objects.create_user(username=faker.first_name(), password='12345')
+    client.force_login(user)
+    recipe = Recipe.objects.create(recipe_name='Test_recipe',
+                                   description='Test_description',
+                                   preparation_time=10,
+                                   portions=4)
+    recipe.products.set(Product.objects.all())
+    assert Recipe.objects.count() == 1
+    response = client.post(reverse('delete-recipe', kwargs={'pk': recipe.pk}))
+    assert response.status_code == 302
+    assert Recipe.objects.count() == 0
+
+
+@pytest.mark.django_db #Do ogarnięcia
+def test_recipe_update(client, new_three_products):
+    user = User.objects.create_user(username=faker.first_name(), password='12345')
+    client.force_login(user)
+    recipe = Recipe.objects.create(recipe_name='Test_recipe',
+                                   description='Test_description',
+                                   preparation_time=10,
+                                   portions=4)
+    recipe.products.set(Product.objects.all())
+    assert Recipe.objects.count() == 1
+    recipe_name = 'Updated_recipe'
+    description = 'Updated_description'
+    preparation_time = '30'
+    products = Product.objects.all()
+    portions = '4.00'
+    post_data = {
+        'recipe_name': recipe_name,
+        'description': description,
+        'preparation_time': preparation_time,
+        'products': (products[0], products[1]),
+        'portions': portions
+    }
+    post_response = client.post(reverse('edit-recipe', kwargs={'recipe_id': recipe.pk}), post_data)
+    assert post_response.status_code == 302
+    assert Recipe.objects.last().recipe_name == recipe_name

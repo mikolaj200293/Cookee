@@ -5,11 +5,13 @@
 {% block content %}
     <ul>
     {% for person in persons %}
+        {% if person.user == user %}
         <li>
             <p>{{ person.name }}, zapotrzebowanie: {{ person.calories }}kcal
                 <a href="{% url 'delete-person' person.id %}">Usuń</a>
             <a href="{% url 'edit-person' person.id %}">Edytuj</a></p>
         </li>
+        {% endif %}
     {% endfor %}
     </ul>
     <div><a href="{% url 'add-person' %}">Dodaj osobę</a></div>
