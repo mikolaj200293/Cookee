@@ -17,6 +17,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from main_app.functions import calculate_days_calories
 
 pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
 
@@ -145,6 +146,7 @@ class ProductsView(View):
     """
     Show all Product model objects.
     """
+
     def get(self, request):
         """
         Get all Product model object and send them to products.html in context
@@ -162,6 +164,7 @@ class RecipesView(View):
     """
     Show all Recipe model objects.
     """
+
     def get(self, request):
         """
         Get all Recipe model object and send them to recipes.html in context
@@ -179,6 +182,7 @@ class PlansView(View):
     """
     Show all Plan model objects
     """
+
     def get(self, request):
         """
         Get all Plan model object and send them to plans.html in context
@@ -196,6 +200,7 @@ class PersonsView(View):
     """
     Show all Persons model objects
     """
+
     def get(self, request):
         """
         Get all Persons model object and send them to persons.html in context
@@ -504,17 +509,6 @@ class PlanUpdate(LoginRequiredMixin, UpdateView):
         return reverse("plans")
 
 
-def calculate_days_calories(plan):
-    days_calories_list = []
-    for day in range(1, plan.plan_length + 1):
-        day_meals = plan.meal_set.filter(plan_day=day)
-        day_calories = 0
-        for meal in day_meals:
-            day_calories += meal.meal_portions * meal.recipes.portion_calories
-        days_calories_list.append(round(day_calories, 2))
-    return days_calories_list
-
-
 class PlanDetailsView(LoginRequiredMixin, View):
     login_url = '/login'
     success_url = '/add_plan'
@@ -559,13 +553,14 @@ class PlanDetailsView(LoginRequiredMixin, View):
             user = request.user
             meal_object = Meal.objects.filter(user=user, plan_name=plan, plan_day=plan_day, meal=meal)
             meal_calories = recipes.portion_calories * portions
-            if meal_object.exists() \
-                    and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
+            if meal_object and ((plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories) or
+                                (plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories <
+                                 meal_object[0].meal_calories)):
                 meal_object.update(user=user, plan_day=plan_day, meal=meal, recipes=recipes, meal_portions=portions)
                 days_calories_list = calculate_days_calories(plan)
                 ctx['days_calories'] = days_calories_list
-            elif meal_object.exists() \
-                    and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] < meal_calories:
+            elif meal_object and plan.plan_calories - calculate_days_calories(plan)[
+                plan_day - 1] < meal_calories and meal_calories > meal_object[0].meal_calories:
                 ctx['message'] = 'Przekroczono limit kalorii'
             elif not meal_object and plan.plan_calories - calculate_days_calories(plan)[plan_day - 1] > meal_calories:
                 instance = Meal.objects.create(user=user, plan_day=plan_day, meal=meal, recipes=recipes,
@@ -658,7 +653,7 @@ class ShoppingListCreate(LoginRequiredMixin, View):
                                                         product=product.product_id)
                 else:
                     ShoppingListProducts.objects.filter(shopping_list=shopping_list.id,
-                                                        product=product.product_id).\
+                                                        product=product.product_id). \
                         update(product_quantity=F('product_quantity') + product.
                                one_portion_product_quantity * meal.meal_portions)
         shopping_list_products = ShoppingListProducts.objects.filter(shopping_list=shopping_list)
@@ -718,6 +713,3 @@ class PlanDayCaloriesCompletion(LoginRequiredMixin, View):
         meal_to_fill.meal_portions += portions_to_fill_quantity
         meal_to_fill.save()
         return redirect('plan-details', plan_id=plan_id)
-
-
-

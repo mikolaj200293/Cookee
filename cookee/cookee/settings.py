@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (os.getenv('DEBUG') == 'True')
+DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'cookee.herokuapp.com']
 
 
@@ -132,7 +132,7 @@ DECIMAL_SEPARATOR = ','
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static'
+STATIC_URL = '/static/'
 
 LOGIN_URL = '/login'
 

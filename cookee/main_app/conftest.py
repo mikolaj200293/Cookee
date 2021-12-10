@@ -31,7 +31,7 @@ def new_three_recipes():
         instance = Recipe.objects.create(recipe_name=recipe,
                                          description=f'Sposób przygotowania {recipe}',
                                          preparation_time=randint(0, 120),
-                                         portions=randint(0, 4))
+                                         portions=randint(0, 400)/100)
         instance.products.set(sample(products, 2))
     return list(Recipe.objects.all())
 
@@ -59,3 +59,5 @@ def new_user_login(client):
     user = User.objects.create_user(username=faker.first_name(), password='12345')
     client.force_login(user)
     return user
+
+

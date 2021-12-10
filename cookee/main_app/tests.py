@@ -1,7 +1,9 @@
 from random import randrange, randint, choice, sample
 from django.contrib.auth.models import User
-from main_app.models import Recipe, Product, ProductCategory, Plan
-from main_app.forms import RecipeForm
+
+from main_app.functions import calculate_days_calories
+from main_app.models import Recipe, Product, ProductCategory, Plan, Meal, ProductsQuantities
+from main_app.forms import RecipeForm, MealForm
 from django.contrib.auth import authenticate, login, logout
 from main_app.utils import three_new_persons_create
 
@@ -52,7 +54,6 @@ def test_login_view(client):
 
 @pytest.mark.django_db
 def test_logout_view(client, new_user_login):
-
     assert new_user_login.is_authenticated
     response = client.get(reverse('logout'))
     assert response.status_code == 200
@@ -164,7 +165,6 @@ def test_add_recipe(client, new_three_products, new_user_login):
     assert recipe.preparation_time == preparation_time
     for i, product in enumerate(list(recipe.products.all())):
         assert product == products[i]
-
 
 
 @pytest.mark.django_db
@@ -327,3 +327,100 @@ def test_plan_update(client, new_three_persons):
     assert Plan.objects.last().plan_length == post_data['plan_length']
     for i, person in enumerate(Plan.objects.last().persons.all()):
         assert person.name == persons[i].name
+
+
+@pytest.mark.django_db
+def test_plan_details_view(client, new_three_plans, new_three_recipes):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    plans_count = Plan.objects.count()
+    assert Persons.objects.count() == 3
+    assert plans_count == 3
+    assert Recipe.objects.count() == 3
+    plan = Plan.objects.last()
+    recipes = Recipe.objects.all()
+    recipes_primary_keys = [recipe.pk for recipe in recipes]
+    for day in range(10):
+        meal = Meal.objects.create(plan_day=randint(1, plan.plan_length),
+                                   meal=randint(1, 5),
+                                   user=user,
+                                   meal_portions=randint(100, 1000) / 100,
+                                   recipes=Recipe.objects.get(pk=sample(recipes_primary_keys, 1)[0]))
+        meal.plan_name.add(plan.pk)
+    assert Meal.objects.count() == 10
+    days_calories_list = calculate_days_calories(plan)
+    get_response = client.get(reverse('plan-details', kwargs={'plan_id': plan.pk}))
+    assert get_response.status_code == 200
+    context_plan = get_response.context['plan']
+    context_persons = get_response.context['persons']
+    context_meals = get_response.context['meals']
+    context_plan_days = get_response.context['plan_days']
+    context_days_calories = get_response.context['days_calories']
+    assert context_plan == plan
+    assert list(context_persons) == list(plan.persons.all())
+    assert list(context_meals) == list(plan.meal_set.all())
+    assert context_plan_days == [day for day in range(1, plan.plan_length + 1)]
+    assert context_days_calories == days_calories_list
+
+    post_recipe = Recipe.objects.get(pk=sample(recipes_primary_keys, 1)[0])
+    post_data = {
+        'plan_day': randint(1, plan.plan_length),
+        'meal': randint(1, 5),
+        'recipes': post_recipe.pk,
+        'meal_portions': 12
+    }
+    post_response = client.post(reverse('plan-details', kwargs={'plan_id': plan.pk}), post_data)
+    assert post_response.status_code == 200
+    meal_object = Meal.objects.filter(user=user,
+                                      plan_name=plan,
+                                      plan_day=post_data['plan_day'],
+                                      meal=post_data['meal'])
+    if Plan.objects.count() == plans_count or Plan.objects.count() == plans_count + 1:
+        assert meal_object[0].recipes == post_recipe
+        assert meal_object[0].plan_day == post_data['plan_day']
+        assert meal_object[0].meal == post_data['meal']
+        assert meal_object[0].meal_portions == post_data['meal_portions']
+    elif Plan.objects.count() == plans_count and post_response.context['message']:
+        assert post_response.context['message'] == 'Przekroczono limit kalorii'
+    elif Plan.objects.count() == plans_count + 1 and post_response.context['message']:
+        assert post_response.context['message'] == 'Przekroczono limit kalorii'
+
+
+@pytest.mark.django_db
+def test_delete_meal(client, new_three_plans, new_three_recipes):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    plan = Plan.objects.last()
+    assert Meal.objects.count() == 0
+    meal = Meal.objects.create(plan_day=randint(1, plan.plan_length),
+                               meal=randint(1, 5),
+                               user=user,
+                               meal_portions=randint(100, 1000) / 100,
+                               recipes=Recipe.objects.last())
+    meal.plan_name.add(plan.pk)
+    assert Meal.objects.count() == 1
+    response = client.post(reverse('delete-meal', kwargs={'pk': meal.pk}))
+    assert response.status_code == 302
+    assert Meal.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_recipe_details_view(client, new_three_recipes, new_user_login):
+    assert User.objects.count() == 1
+    assert Recipe.objects.count() == 3
+    recipe = Recipe.objects.last()
+    get_response = client.get(reverse('recipe-details', kwargs={'recipe_id': recipe.pk}))
+    assert get_response.status_code == 200
+    assert get_response.context['recipe'] == recipe
+    assert list(get_response.context['products']) == list(recipe.productsquantities_set.all())
+
+    products = Product.objects.all()
+    products_primary_keys = [product.pk for product in products]
+    post_data = {
+        'product_id': Product.objects.get(pk=sample(products_primary_keys, 1)[0]).pk,
+        'product_quantity': randint(1, 1000)
+    }
+    post_response = client.post(reverse('recipe-details', kwargs={'recipe_id': recipe.pk}), post_data)
+    assert post_response.status_code == 200
+    product_quantities = ProductsQuantities.objects.filter(recipe_id=recipe, product_id=post_data['product_id'])
+    assert product_quantities[0].product_quantity == post_data['product_quantity']
