@@ -31,8 +31,13 @@ def new_three_recipes():
         instance = Recipe.objects.create(recipe_name=recipe,
                                          description=f'Sposób przygotowania {recipe}',
                                          preparation_time=randint(0, 120),
-                                         portions=randint(0, 400)/100)
+                                         portions=randint(100, 400)/100)
         instance.products.set(sample(products, 2))
+    recipes = Recipe.objects.all()
+    for recipe in recipes:
+        for product in recipe.productsquantities_set.all():
+            product.product_quantity = randint(100, 1000)
+            product.save()
     return list(Recipe.objects.all())
 
 

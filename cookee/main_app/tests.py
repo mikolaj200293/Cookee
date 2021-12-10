@@ -2,7 +2,8 @@ from random import randrange, randint, choice, sample
 from django.contrib.auth.models import User
 
 from main_app.functions import calculate_days_calories
-from main_app.models import Recipe, Product, ProductCategory, Plan, Meal, ProductsQuantities
+from main_app.models import Recipe, Product, ProductCategory, Plan, Meal, ProductsQuantities, ShoppingList, \
+    ShoppingListProducts
 from main_app.forms import RecipeForm, MealForm
 from django.contrib.auth import authenticate, login, logout
 from main_app.utils import three_new_persons_create
@@ -375,14 +376,14 @@ def test_plan_details_view(client, new_three_plans, new_three_recipes):
                                       plan_name=plan,
                                       plan_day=post_data['plan_day'],
                                       meal=post_data['meal'])
-    if Plan.objects.count() == plans_count or Plan.objects.count() == plans_count + 1:
+    if Meal.objects.count() == plans_count or Meal.objects.count() == plans_count + 1:
         assert meal_object[0].recipes == post_recipe
         assert meal_object[0].plan_day == post_data['plan_day']
         assert meal_object[0].meal == post_data['meal']
         assert meal_object[0].meal_portions == post_data['meal_portions']
-    elif Plan.objects.count() == plans_count and post_response.context['message']:
+    elif Meal.objects.count() == plans_count and post_response.context['message']:
         assert post_response.context['message'] == 'Przekroczono limit kalorii'
-    elif Plan.objects.count() == plans_count + 1 and post_response.context['message']:
+    elif Meal.objects.count() == plans_count + 1 and post_response.context['message']:
         assert post_response.context['message'] == 'Przekroczono limit kalorii'
 
 
@@ -414,7 +415,7 @@ def test_recipe_details_view(client, new_three_recipes, new_user_login):
     assert get_response.context['recipe'] == recipe
     assert list(get_response.context['products']) == list(recipe.productsquantities_set.all())
 
-    products = Product.objects.all()
+    products = recipe.products.all()
     products_primary_keys = [product.pk for product in products]
     post_data = {
         'product_id': Product.objects.get(pk=sample(products_primary_keys, 1)[0]).pk,
@@ -424,3 +425,80 @@ def test_recipe_details_view(client, new_three_recipes, new_user_login):
     assert post_response.status_code == 200
     product_quantities = ProductsQuantities.objects.filter(recipe_id=recipe, product_id=post_data['product_id'])
     assert product_quantities[0].product_quantity == post_data['product_quantity']
+
+
+@pytest.mark.django_db
+def test_add_shopping_list(client, new_three_plans, new_three_recipes):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    plans_count = Plan.objects.count()
+    assert Persons.objects.count() == 3
+    assert plans_count == 3
+    assert Recipe.objects.count() == 3
+    plan = Plan.objects.last()
+    recipes = Recipe.objects.all()
+    recipes_primary_keys = [recipe.pk for recipe in recipes]
+    for day in range(10):
+        meal = Meal.objects.create(plan_day=randint(1, plan.plan_length),
+                                   meal=randint(1, 5),
+                                   user=user,
+                                   meal_portions=randint(100, 1000) / 100,
+                                   recipes=Recipe.objects.get(pk=sample(recipes_primary_keys, 1)[0]))
+        meal.plan_name.add(plan.pk)
+    assert Meal.objects.count() == 10
+    shopping_list_count = ShoppingList.objects.count()
+    assert shopping_list_count == 0
+    response = client.get(reverse('shopping-list', kwargs={'plan_id': plan.pk}))
+    assert response.status_code == 200
+    assert ShoppingList.objects.count() == shopping_list_count + 1
+    assert ShoppingListProducts.objects.filter(shopping_list=ShoppingList.objects.first()).count() > 0
+    total_plan_products_quantity = 0
+    for meal in plan.meal_set.all():
+        for product in meal.recipes.productsquantities_set.all():
+            total_plan_products_quantity += product.one_portion_product_quantity * meal.meal_portions
+    total_shopping_list_products_quantity = 0
+    for product in ShoppingListProducts.objects.filter(shopping_list=ShoppingList.objects.first()):
+        total_shopping_list_products_quantity += product.product_quantity
+    assert round(total_plan_products_quantity, 0) == round(total_shopping_list_products_quantity, 0)
+
+
+@pytest.mark.django_db
+def test_shopping_list_pdf(client, new_three_plans, new_three_recipes):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    shopping_list = ShoppingList.objects.create(plan=Plan.objects.last())
+    products = Product.objects.all()
+    for product in products:
+        ShoppingListProducts.objects.create(product_quantity=randint(100, 1000),
+                                            shopping_list=shopping_list,
+                                            product=product)
+    response = client.get(reverse('shopping-list-pdf'))
+    # print(list(response.streaming_content)[0].decode('UTF-8'))
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_plan_day_calories_completion(client, new_three_plans, new_three_recipes):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    plan = Plan.objects.last()
+    recipes = Recipe.objects.all()
+    recipes_primary_keys = [recipe.pk for recipe in recipes]
+    for day in range(10):
+        meal_instance = Meal.objects.create(plan_day=randint(1, plan.plan_length),
+                                            meal=randint(1, 5),
+                                            user=user,
+                                            meal_portions=randint(100, 1000) / 100,
+                                            recipes=Recipe.objects.get(pk=sample(recipes_primary_keys, 1)[0]))
+        meal_instance.plan_name.add(plan.pk)
+    meals = Meal.objects.all()
+    meal = sample(list(meals), 1)[0]
+    plan_day = meal.plan_day
+    day_meal = meal.meal
+    response = client.get(reverse('fill-calories', kwargs={'plan_id': plan.pk, 'plan_day': plan_day, 'day_meal': day_meal}))
+    assert response.status_code == 302
+    updated_meal = Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=day_meal)
+    assert updated_meal[0].meal_portions != meal.meal_portions
+
+
+

@@ -107,7 +107,7 @@ class Meal(models.Model):
 
 
 class ProductsQuantities(models.Model):
-    product_quantity = models.DecimalField(default=0, verbose_name='Ilość produktu', decimal_places=1, max_digits=5)
+    product_quantity = models.DecimalField(default=0, verbose_name='Ilość produktu', decimal_places=1, max_digits=8)
     recipe_id = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
 
@@ -125,6 +125,6 @@ class ShoppingList(models.Model):
 
 
 class ShoppingListProducts(models.Model):
-    product_quantity = models.DecimalField(default=0, decimal_places=1, max_digits=5)
+    product_quantity = models.DecimalField(default=0, decimal_places=1, max_digits=8)
     shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
