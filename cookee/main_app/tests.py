@@ -1,9 +1,9 @@
-from random import randrange
+from random import randrange, randint, choice, sample
 from django.contrib.auth.models import User
-from main_app.models import Recipe, Product, ProductCategory
+from main_app.models import Recipe, Product, ProductCategory, Plan
 from main_app.forms import RecipeForm
-from main_app.utils import three_new_products_create
 from django.contrib.auth import authenticate, login, logout
+from main_app.utils import three_new_persons_create
 
 import pytest
 from faker import Faker
@@ -51,9 +51,9 @@ def test_login_view(client):
 
 
 @pytest.mark.django_db
-def test_logout_view(client, new_user):
+def test_logout_view(client, new_user_login):
 
-    assert new_user.is_authenticated
+    assert new_user_login.is_authenticated
     response = client.get(reverse('logout'))
     assert response.status_code == 200
     assert 'Zaloguj' in str(response.content)
@@ -92,7 +92,7 @@ def test_persons_view(client, new_three_persons):
 
 
 @pytest.mark.django_db
-def test_add_person(client, new_user):
+def test_add_person(client, new_user_login):
     assert User.objects.count() == 1
     persons_count = Persons.objects.count()
     assert persons_count == 0
@@ -111,9 +111,9 @@ def test_add_person(client, new_user):
 
 
 @pytest.mark.django_db
-def test_delete_person(client, new_user):
+def test_delete_person(client, new_user_login):
     assert User.objects.count() == 1
-    person = Persons.objects.create(name=faker.first_name(), calories=2000, user=new_user)
+    person = Persons.objects.create(name=faker.first_name(), calories=2000, user=new_user_login)
     assert Persons.objects.count() == 1
     response = client.post(reverse('delete-person', kwargs={'pk': person.pk}))
     assert response.status_code == 302
@@ -121,9 +121,9 @@ def test_delete_person(client, new_user):
 
 
 @pytest.mark.django_db
-def test_person_update(client, new_user):
+def test_person_update(client, new_user_login):
     assert User.objects.count() == 1
-    person = Persons.objects.create(name='Test_person', calories=2000, user=new_user)
+    person = Persons.objects.create(name='Test_person', calories=2000, user=new_user_login)
     assert Persons.objects.count() == 1
     new_person_name = 'Updated_person_name'
     new_calories = 1500
@@ -137,20 +137,20 @@ def test_person_update(client, new_user):
 
 
 @pytest.mark.django_db
-def test_add_recipe(client, new_three_products, new_user):
+def test_add_recipe(client, new_three_products, new_user_login):
     assert User.objects.count() == 1
     recipes_count = Recipe.objects.count()
     assert recipes_count == 0
     recipe_name = 'Test_recipe'
     description = 'Test_description'
     preparation_time = 30
-    products = Product.objects.all()
+    products = Product.objects.all()[0:2]
     portions = 4.0
     post_data = {
         'recipe_name': recipe_name,
         'description': description,
         'preparation_time': preparation_time,
-        'products': (products[1].pk, products[2].pk),
+        'products': (products[0].pk, products[1].pk),
         'portions': portions
     }
     form = RecipeForm(data=post_data)
@@ -162,14 +162,13 @@ def test_add_recipe(client, new_three_products, new_user):
     assert recipe.recipe_name == recipe_name
     assert recipe.description == description
     assert recipe.preparation_time == preparation_time
-    n = 1
-    for product in recipe.products.all():
-        assert product == products[n]
-        n += 1
+    for i, product in enumerate(list(recipe.products.all())):
+        assert product == products[i]
+
 
 
 @pytest.mark.django_db
-def test_delete_recipe(client, new_three_products, new_user):
+def test_delete_recipe(client, new_three_products, new_user_login):
     assert User.objects.count() == 1
     recipe = Recipe.objects.create(recipe_name='Test_recipe',
                                    description='Test_description',
@@ -183,7 +182,7 @@ def test_delete_recipe(client, new_three_products, new_user):
 
 
 @pytest.mark.django_db
-def test_recipe_update(client, new_three_products, new_user):
+def test_recipe_update(client, new_three_products, new_user_login):
     assert User.objects.count() == 1
     recipe = Recipe.objects.create(recipe_name='Test_recipe',
                                    description='Test_description',
@@ -209,7 +208,7 @@ def test_recipe_update(client, new_three_products, new_user):
 
 
 @pytest.mark.django_db
-def test_add_product(client, new_user):
+def test_add_product(client, new_user_login):
     assert User.objects.count() == 1
     category = ProductCategory.objects.create(category_name='Test_category')
     products_count = Product.objects.count()
@@ -229,7 +228,7 @@ def test_add_product(client, new_user):
 
 
 @pytest.mark.django_db
-def test_delete_product(client, new_user):
+def test_delete_product(client, new_user_login):
     assert User.objects.count() == 1
     category = ProductCategory.objects.create(category_name='Test_category')
     product = Product.objects.create(product_name='Test_product',
@@ -241,3 +240,90 @@ def test_delete_product(client, new_user):
     response = client.post(reverse('delete-product', kwargs={'pk': product.pk}))
     assert response.status_code == 302
     assert Recipe.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_product_update(client, new_user_login):
+    assert User.objects.count() == 1
+    category = ProductCategory.objects.create(category_name='Test_category')
+    product = Product.objects.create(product_name='Test_product',
+                                     proteins=10.0,
+                                     carbohydrates=15.0,
+                                     fats=7.0,
+                                     category=category)
+    assert Product.objects.count() == 1
+    new_category = ProductCategory.objects.create(category_name='New_category')
+    post_data = {
+        'product_name': 'Updated_product_name',
+        'proteins': 20.0,
+        'carbohydrates': 10.0,
+        'fats': 20.0,
+        'category': new_category.pk
+    }
+    response = client.post(reverse('edit-product', kwargs={'product_id': product.pk}), post_data)
+    assert response.status_code == 302
+    assert Product.objects.last().product_name == post_data['product_name']
+    assert Product.objects.last().carbohydrates == post_data['carbohydrates']
+    assert Product.objects.last().category == new_category
+
+
+@pytest.mark.django_db
+def test_add_plan(client, new_three_persons):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    assert User.objects.count() == 1
+    plans_count = Plan.objects.count()
+    assert plans_count == 0
+    persons = Persons.objects.all()[0:2]
+    post_data = {
+        'plan_name': 'Test_plan',
+        'plan_length': randint(1, 21),
+        'persons': (persons[0].pk, persons[1].pk)
+    }
+    response = client.post(reverse('add-plan'), post_data)
+    assert response.status_code == 200
+    assert Plan.objects.count() == plans_count + 1
+    new_plan = Plan.objects.first()
+    assert new_plan.plan_name == post_data['plan_name']
+    assert new_plan.plan_length == post_data['plan_length']
+    for i, person in enumerate(new_plan.persons.all()):
+        assert person.name == persons[i].name
+    assert new_plan.user == user
+
+
+@pytest.mark.django_db
+def test_delete_plan(client, new_user_login):
+    assert User.objects.count() == 1
+    assert Plan.objects.count() == 0
+    persons = three_new_persons_create()
+    plan = Plan.objects.create(plan_name='Test_plan',
+                               plan_length=randint(1, 21),
+                               user=User.objects.first())
+    plan.persons.set(persons[0:2])
+    assert Plan.objects.count() == 1
+    response = client.post(reverse('delete-plan', kwargs={'pk': plan.pk}))
+    assert response.status_code == 302
+    assert Plan.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_plan_update(client, new_three_persons):
+    user = Persons.objects.last().user
+    client.force_login(user=user)
+    assert User.objects.count() == 1
+    plan = Plan.objects.create(plan_name='Test_plan',
+                               plan_length=randint(1, 21),
+                               user=User.objects.first())
+    assert Plan.objects.count() == 1
+    persons = Persons.objects.all()[0:2]
+    post_data = {
+        'plan_name': 'Updated_plan_name',
+        'plan_length': randint(1, 21),
+        'persons': (persons[0].pk, persons[1].pk)
+    }
+    response = client.post(reverse('edit-plan', kwargs={'plan_id': plan.pk}), post_data)
+    assert response.status_code == 302
+    assert Plan.objects.last().plan_name == post_data['plan_name']
+    assert Plan.objects.last().plan_length == post_data['plan_length']
+    for i, person in enumerate(Plan.objects.last().persons.all()):
+        assert person.name == persons[i].name

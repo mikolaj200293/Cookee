@@ -55,7 +55,7 @@ def new_three_persons():
 
 
 @pytest.fixture
-def new_user(client):
+def new_user_login(client):
     user = User.objects.create_user(username=faker.first_name(), password='12345')
     client.force_login(user)
     return user

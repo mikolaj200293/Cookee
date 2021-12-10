@@ -480,7 +480,7 @@ class PlanCreate(LoginRequiredMixin, View):
             ctx['plans'] = plans
             return TemplateResponse(request, 'main_app/plans.html', ctx)
         else:
-            return TemplateResponse(request, 'main_app/plans.html', ctx)
+            return TemplateResponse(request, 'main_app/add_plan_form.html', ctx)
 
 
 class PlanDelete(LoginRequiredMixin, DeleteView):

@@ -34,7 +34,7 @@ def new_user_create():
 
 def three_new_persons_create():
     user = new_user_create()
-    persons_names = ['Person1', 'Person2', 'Person3']
+    persons_names = [faker.first_name(), faker.first_name(), faker.first_name()]
     for person in persons_names:
         Persons.objects.create(name=person,
                                calories=randrange(1000, 4000, 100),
