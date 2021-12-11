@@ -19,7 +19,7 @@ faker = Faker('pl_PL')
 @pytest.mark.django_db
 def test_home_view(client):
     """
-    Test HomeView.
+    Test HomeView view.
     :param client: Django Client() object.
     :return: Assert response status code.
     """
@@ -30,7 +30,7 @@ def test_home_view(client):
 @pytest.mark.django_db
 def test_create_user(client):
     """
-    Test AddUserView.
+    Test AddUserView view.
     :param client: Django Client() object.
     :return: Assert if User model object is correctly created.
     """
@@ -52,7 +52,7 @@ def test_create_user(client):
 @pytest.mark.django_db
 def test_login_view(client):
     """
-    Test LoginView.
+    Test LoginView view.
     :param client: Django Client() object.
     :return: Asser if user is correctly logged-in and view redirects to next url.
     """
@@ -71,7 +71,7 @@ def test_login_view(client):
 @pytest.mark.django_db
 def test_logout_view(client, new_user_login):
     """
-    Test LogoutView.
+    Test LogoutView view.
     :param client: Django Client() object.
     :param new_user_login: Fixture that creates and logs in new user.
     :return: Assert if view stays the same url and if 'Zaloguj' shows on the website.
@@ -85,7 +85,7 @@ def test_logout_view(client, new_user_login):
 @pytest.mark.django_db
 def test_products_view(client, new_three_products):
     """
-    Test ProductsView.
+    Test ProductsView view.
     :param client: Django Client() object.
     :param new_three_products: Fixture that creates 3 Product model objects
     :return: Assert if all created products shows on the website
@@ -99,7 +99,7 @@ def test_products_view(client, new_three_products):
 @pytest.mark.django_db
 def test_recipes_view(client, new_three_recipes):
     """
-    Test RecipesView.
+    Test RecipesView view.
     :param client: Django Client() object.
     :param new_three_recipes: Fixture that creates 3 Recipe model objects
     :return: Assert if all created recipes shows on the website
@@ -113,7 +113,7 @@ def test_recipes_view(client, new_three_recipes):
 @pytest.mark.django_db
 def test_plans_view(client, new_three_plans):
     """
-    Test PlansView.
+    Test PlansView view.
     :param client: Django Client() object.
     :param new_three_plans: Fixture that creates 3 Plan model objects
     :return: Assert if all created plans shows on the website
@@ -127,7 +127,7 @@ def test_plans_view(client, new_three_plans):
 @pytest.mark.django_db
 def test_persons_view(client, new_three_persons):
     """
-    Test PersonsView.
+    Test PersonsView view.
     :param client: Django Client() object.
     :param new_three_persons: Fixture that creates 3 Persons model objects
     :return: Assert if all created persons shows on the website
@@ -140,6 +140,12 @@ def test_persons_view(client, new_three_persons):
 
 @pytest.mark.django_db
 def test_add_person(client, new_user_login):
+    """
+    Test PersonCreate view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Persons model object is correctly created.
+    """
     assert User.objects.count() == 1
     persons_count = Persons.objects.count()
     assert persons_count == 0
@@ -159,6 +165,12 @@ def test_add_person(client, new_user_login):
 
 @pytest.mark.django_db
 def test_delete_person(client, new_user_login):
+    """
+    Test PersonDelete view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Person model object is correctly deleted.
+    """
     assert User.objects.count() == 1
     person = Persons.objects.create(name=faker.first_name(), calories=2000, user=new_user_login)
     assert Persons.objects.count() == 1
@@ -169,6 +181,12 @@ def test_delete_person(client, new_user_login):
 
 @pytest.mark.django_db
 def test_person_update(client, new_user_login):
+    """
+    Test PersonUpdate view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Person model object is correctly updated.
+    """
     assert User.objects.count() == 1
     person = Persons.objects.create(name='Test_person', calories=2000, user=new_user_login)
     assert Persons.objects.count() == 1
@@ -185,6 +203,13 @@ def test_person_update(client, new_user_login):
 
 @pytest.mark.django_db
 def test_add_recipe(client, new_three_products, new_user_login):
+    """
+    Test RecipeCreate view.
+    :param client: Django Client() object.
+    :param new_three_products: Fixture that creates 3 Product model objects.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Recipe model object is correctly created
+    """
     assert User.objects.count() == 1
     recipes_count = Recipe.objects.count()
     assert recipes_count == 0
@@ -215,6 +240,13 @@ def test_add_recipe(client, new_three_products, new_user_login):
 
 @pytest.mark.django_db
 def test_delete_recipe(client, new_three_products, new_user_login):
+    """
+    Test RecipeDelete view.
+    :param client: Django Client() object.
+    :param new_three_products: Fixture that creates 3 Product model objects.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Recipe model object is correctly deleted.
+    """
     assert User.objects.count() == 1
     recipe = Recipe.objects.create(recipe_name='Test_recipe',
                                    description='Test_description',
@@ -229,6 +261,13 @@ def test_delete_recipe(client, new_three_products, new_user_login):
 
 @pytest.mark.django_db
 def test_recipe_update(client, new_three_products, new_user_login):
+    """
+    Test RecipeUpdate view.
+    :param client: Django Client() object.
+    :param new_three_products: Fixture that creates 3 Product model objects.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Recipe model object is correctly updated.
+    """
     assert User.objects.count() == 1
     recipe = Recipe.objects.create(recipe_name='Test_recipe',
                                    description='Test_description',
@@ -255,6 +294,12 @@ def test_recipe_update(client, new_three_products, new_user_login):
 
 @pytest.mark.django_db
 def test_add_product(client, new_user_login):
+    """
+    Test ProductCreate view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Product model object is correctly created.
+    """
     assert User.objects.count() == 1
     category = ProductCategory.objects.create(category_name='Test_category')
     products_count = Product.objects.count()
@@ -275,6 +320,12 @@ def test_add_product(client, new_user_login):
 
 @pytest.mark.django_db
 def test_delete_product(client, new_user_login):
+    """
+    Test ProductDelete view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Product model object is correctly deleted.
+    """
     assert User.objects.count() == 1
     category = ProductCategory.objects.create(category_name='Test_category')
     product = Product.objects.create(product_name='Test_product',
@@ -290,6 +341,12 @@ def test_delete_product(client, new_user_login):
 
 @pytest.mark.django_db
 def test_product_update(client, new_user_login):
+    """
+    Test ProductUpdate view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Product model object is correctly updated.
+    """
     assert User.objects.count() == 1
     category = ProductCategory.objects.create(category_name='Test_category')
     product = Product.objects.create(product_name='Test_product',
@@ -315,6 +372,12 @@ def test_product_update(client, new_user_login):
 
 @pytest.mark.django_db
 def test_add_plan(client, new_three_persons):
+    """
+    Test PlanCreate view.
+    :param client: Django Client() object.
+    :param new_three_persons: Fixture that creates 3 Persons model objects
+    :return: Assert if Plan model object is correctly created.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     assert User.objects.count() == 1
@@ -339,6 +402,12 @@ def test_add_plan(client, new_three_persons):
 
 @pytest.mark.django_db
 def test_delete_plan(client, new_user_login):
+    """
+    Test PlanDelete view.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if Plan model object is correctly deleted.
+    """
     assert User.objects.count() == 1
     assert Plan.objects.count() == 0
     persons = three_new_persons_create()
@@ -354,6 +423,12 @@ def test_delete_plan(client, new_user_login):
 
 @pytest.mark.django_db
 def test_plan_update(client, new_three_persons):
+    """
+    Test PlanUpdate view.
+    :param client: Django Client() object.
+    :param new_three_persons: Fixture that creates 3 Persons model objects
+    :return: Assert if Plan model object is correctly updated.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     assert User.objects.count() == 1
@@ -377,6 +452,13 @@ def test_plan_update(client, new_three_persons):
 
 @pytest.mark.django_db
 def test_plan_details_view(client, new_three_plans, new_three_recipes):
+    """
+    Test PlanDetailsView view.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plans model objects
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :return: Assert if Meal model objects are correctly created or updated.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     plans_count = Plan.objects.count()
@@ -434,6 +516,13 @@ def test_plan_details_view(client, new_three_plans, new_three_recipes):
 
 @pytest.mark.django_db
 def test_delete_meal(client, new_three_plans, new_three_recipes):
+    """
+    Test MealDelete view.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plans model objects
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :return: Assert if Meal model objects are correctly deleted.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     plan = Plan.objects.last()
@@ -452,6 +541,13 @@ def test_delete_meal(client, new_three_plans, new_three_recipes):
 
 @pytest.mark.django_db
 def test_recipe_details_view(client, new_three_recipes, new_user_login):
+    """
+    Test RecipeDetails View.
+    :param client: Django Client() object.
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if ProductQuantities model objects are correctly updated.
+    """
     assert User.objects.count() == 1
     assert Recipe.objects.count() == 3
     recipe = Recipe.objects.last()
@@ -474,6 +570,13 @@ def test_recipe_details_view(client, new_three_recipes, new_user_login):
 
 @pytest.mark.django_db
 def test_add_shopping_list(client, new_three_plans, new_three_recipes):
+    """
+    Test ShoppingListCreate view.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plans model objects
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :return: Assert if ShoppingList and ShoppingListProducts models objects are correctly created or updated.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     plans_count = Plan.objects.count()
@@ -509,6 +612,13 @@ def test_add_shopping_list(client, new_three_plans, new_three_recipes):
 
 @pytest.mark.django_db
 def test_shopping_list_pdf(client, new_three_plans, new_three_recipes):
+    """
+    Test ShoppingListPdf view.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plans model objects
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :return: Assert if ShoppingListProducts model objects are saved to pdf.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     shopping_list = ShoppingList.objects.create(plan=Plan.objects.last())
@@ -524,6 +634,13 @@ def test_shopping_list_pdf(client, new_three_plans, new_three_recipes):
 
 @pytest.mark.django_db
 def test_plan_day_calories_completion(client, new_three_plans, new_three_recipes):
+    """
+    Test PlanDayCaloriesCompletion view.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plans model objects
+    :param new_three_recipes: Fixture that creates 3 Recipes model objects
+    :return: Assert if updated Meal object portions are changing.
+    """
     user = Persons.objects.last().user
     client.force_login(user=user)
     plan = Plan.objects.last()
