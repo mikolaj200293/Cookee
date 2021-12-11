@@ -572,7 +572,7 @@ class PlanDetailsView(LoginRequiredMixin, View):
     def post(self, request, plan_id):
         """
         Create context data for plan_details.html. Validate MealForm. If MealForm is valid create or update requested
-        Meal model object. If Meal for is not valid redirect to plan_details.html.
+        Meal model object. If MealForm is not valid redirect to plan_details.html.
         If Meal model object update check for calories amount. If new Meal model object calories amount exceed
         the calories left for use for plan_day add error message to context. If opposite update requested Meal model
         object.
@@ -629,28 +629,56 @@ class PlanDetailsView(LoginRequiredMixin, View):
 
 
 class MealDelete(LoginRequiredMixin, DeleteView):
+    """
+    Delete Meal model object. Require logged-in user. Redirect to /plan_details/<plan_id>.
+    """
     login_url = '/login'
     success_url = '/plans'
     model = Meal
 
     def get_success_url(self):
+        """
+        Define Url to redirect after Meal model object deletion
+        :return: Url to redirect after update
+        """
         meal = Meal.objects.get(pk=self.kwargs['pk']).pk
         plan = Plan.objects.get(meal=meal)
         return f'/plan_details/{plan.pk}'
 
     def get_context_data(self, **kwargs):
+        """
+        Create context data.
+        :param kwargs: Built-in parameter
+        :return: Context data with Plan model object
+        """
         meal = Meal.objects.get(pk=self.kwargs['pk']).pk
         return {'plan': Plan.objects.get(meal=meal)}
 
     def get_object(self, queryset=None):
+        """
+        Select Meal object to delete
+        :param queryset: Built-in parameter
+        :return: Meal model object to delete
+        """
         return Meal.objects.get(pk=self.kwargs['pk'])
 
 
 class RecipeDetailsView(LoginRequiredMixin, View):
+    """
+    Set products quantities in ProductQuantities model object related to chosen Recipe model object.
+    Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/recipes'
 
     def get(self, request, recipe_id):
+        """
+        Create context data for recipe_details.html. Redirect to recipe_details.html.
+        :param request: Django request object.
+        :param recipe_id: Recipe model object primary key to which updated ProductQuantities objects are related.
+        :return: Redirect to recipe_details.html with QuantitiesForm and recipe and related products quantities
+        data in context.
+        """
         form = QuantitiesForm()
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
@@ -666,6 +694,14 @@ class RecipeDetailsView(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/recipe_details.html', ctx)
 
     def post(self, request, recipe_id):
+        """
+        Create context data for recipe_details.html. Validate QuantitiesForm. If MealForm is valid update requested
+        ProductQuantities model object. If QuantitiesForm is not valid redirect to recipe_details.html.
+        :param request: Django request object.
+        :param recipe_id: Recipe model object primary key to which updated ProductQuantities objects are related.
+        :return: Redirect to recipe_details.html with QuantitiesForm and recipe and related products quantities
+        data in context.
+        """
         form = QuantitiesForm(request.POST)
         recipe = Recipe.objects.get(pk=recipe_id)
         recipe_products = recipe.products.all()
@@ -690,8 +726,23 @@ class RecipeDetailsView(LoginRequiredMixin, View):
 
 
 class ShoppingListCreate(LoginRequiredMixin, View):
+    """
+    Create ShoppingList model object related to chosen Plan model object. Create and update ShoppingListProducts model
+    objects related to created ShoppingList model object. Require logged-in user.
+    """
+    login_url = '/login'
+    success_url = '/plans'
 
     def get(self, request, plan_id):
+        """
+        Create ShoppingList model object for related Plan model object. Set (create/update) ShoppingListProducts model
+        object for created ShoppingList model object. Create context data for shopping_list.html. Redirect to
+        shopping_list.html.
+        :param request: Django request object.
+        :param plan_id: Plan model object primary key to which created ShoppingList model objects are related.
+        :return: Redirect to shopping_list.html with QuantitiesForm with shopping list products and products categories
+        in context data.
+        """
         plan = Plan.objects.get(pk=plan_id)
         meals = plan.meal_set.all()
         ShoppingList.objects.create(name=f'Lista zakupów plan {plan.plan_name}', plan=plan)
@@ -722,8 +773,19 @@ class ShoppingListCreate(LoginRequiredMixin, View):
 
 
 class ShoppingListPdf(LoginRequiredMixin, View):
+    """
+    Generate .pdf file with ShoppingListProducts related to last created ShoppingList model object and download it.
+    """
+    login_url = '/login'
+    success_url = '/plans'
 
     def get(self, request):
+        """
+        Create string with ShoppingListProducts model object data related to last created ShoppingList model object.
+        Create .pdf file and save created string to it.
+        :param request: Django request object
+        :return: Download 'Lista zakupów.pdf'.
+        """
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
         p.setFont('Arial', 14)
@@ -746,14 +808,26 @@ class ShoppingListPdf(LoginRequiredMixin, View):
         p.showPage()
         p.save()
         buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename='lista zakupów.pdf')
+        return FileResponse(buffer, as_attachment=True, filename='Lista zakupów.pdf')
 
 
 class PlanDayCaloriesCompletion(LoginRequiredMixin, View):
+    """
+    Update Meal object portions parameter to fulfill plan day calories.
+    """
     login_url = '/login'
     success_url = '/plans'
 
     def get(self, request, plan_id, plan_day, day_meal):
+        """
+        Check for calories gap in selected plan_day in relation to plan's persons calories sum. Update selected Meal
+        model object portions parameter, to cover the calories gap.
+        :param request: Django request object
+        :param plan_id: Plan model object primary key to which updated Meal model objects are related.
+        :param plan_day: Updated Meal model object plan_day parameter.
+        :param day_meal: Updated Meal model meal parameter
+        :return: Redirect to plan_details/<plan_id>.
+        """
         plan_calories = Plan.objects.get(pk=plan_id).plan_calories
         plan_meals = Plan.objects.get(pk=plan_id).meal_set.filter(plan_day=plan_day)
         day_calories = 0
