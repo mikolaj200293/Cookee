@@ -7,8 +7,10 @@ from faker import Faker
 faker = Faker("pl_PL")
 
 
-
 def three_new_products_create():
+    """
+    Create 3 Product model objects.
+    """
     categories_names = ['Nabiał', 'Pieczywo', 'Mięso']
     for category in categories_names:
         ProductCategory.objects.create(category_name=category)
@@ -24,6 +26,9 @@ def three_new_products_create():
 
 
 def new_user_create():
+    """
+    Create User model object.
+    """
     user = User.objects.create_user(username=faker.first_name(),
                                     password='test_password',
                                     first_name='user_first_name',
@@ -33,6 +38,9 @@ def new_user_create():
 
 
 def three_new_persons_create():
+    """
+    Create list of 3 Persons model objects.
+    """
     user = new_user_create()
     persons_names = [faker.first_name(), faker.first_name(), faker.first_name()]
     for person in persons_names:
@@ -40,5 +48,3 @@ def three_new_persons_create():
                                calories=randrange(1000, 4000, 100),
                                user=user)
     return list(Persons.objects.all())
-
-

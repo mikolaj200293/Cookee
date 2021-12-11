@@ -655,7 +655,9 @@ def test_plan_day_calories_completion(client, new_three_plans, new_three_recipes
     meal = sample(list(meals), 1)[0]
     plan_day = meal.plan_day
     day_meal = meal.meal
-    response = client.get(reverse('fill-calories', kwargs={'plan_id': plan.pk, 'plan_day': plan_day, 'day_meal': day_meal}))
+    response = client.get(reverse('fill-calories', kwargs={'plan_id': plan.pk,
+                                                           'plan_day': plan_day,
+                                                           'day_meal': day_meal}))
     assert response.status_code == 302
     updated_meal = Meal.objects.filter(plan_name=plan, plan_day=plan_day, meal=day_meal)
     assert updated_meal[0].meal_portions != meal.meal_portions
