@@ -1,13 +1,11 @@
 from random import randint, sample
 from django.contrib.auth.models import User
-
 from main_app.functions import calculate_days_calories
 from main_app.models import Recipe, Product, ProductCategory, Plan, Meal, ProductsQuantities, ShoppingList, \
     ShoppingListProducts
 from main_app.forms import RecipeForm
 from django.contrib.auth import authenticate
 from main_app.utils import three_new_persons_create
-
 import pytest
 from faker import Faker
 from django.urls import reverse
