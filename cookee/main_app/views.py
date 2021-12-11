@@ -459,10 +459,18 @@ class ProductUpdate(LoginRequiredMixin, UpdateView):
 
 
 class PlanCreate(LoginRequiredMixin, View):
+    """
+    Create Plan mode object. Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/add_plan'
 
     def get(self, request):
+        """
+        Redirect to Plan model object adding form.
+        :param request: django request object
+        :return: redirect to add_plan_form.html with PlanForm in context
+        """
         form = PlanForm()
         ctx = {
             'form': form
@@ -470,6 +478,13 @@ class PlanCreate(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/add_plan_form.html', ctx)
 
     def post(self, request):
+        """
+        Validate PlanForm data. If form is valid create new Plan model object and redirect to plans.html
+        with all Plan model objects in context. If form is not valid redirect to add_plan_form.html
+        :param request: django request object
+        :return: If Plan model object created redirect to plans.html. If Plan model object not created redirect
+        to add_plan_form.html
+        """
         form = PlanForm(request.POST)
         ctx = {
             'form': form,
@@ -489,12 +504,18 @@ class PlanCreate(LoginRequiredMixin, View):
 
 
 class PlanDelete(LoginRequiredMixin, DeleteView):
+    """
+    Delete Plan model object. Require logged-in user. Redirect to /plans.
+    """
     login_url = '/login'
     model = Plan
     success_url = '/plans'
 
 
 class PlanUpdate(LoginRequiredMixin, UpdateView):
+    """
+    Update Plan model object. Require logged-in user. Redirect to /plans.
+    """
     login_url = '/login'
     success_url = '/plans'
 
@@ -503,17 +524,35 @@ class PlanUpdate(LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update_form'
 
     def get_object(self, queryset=None):
+        """
+        Select Plan object to update
+        :param queryset: built-in parameter
+        :return: Plan model object to update
+        """
         return Plan.objects.get(pk=self.kwargs['plan_id'])
 
     def get_success_url(self):
+        """
+        Define Url to redirect after Product model object update
+        :return: Url to redirect after update
+        """
         return reverse("plans")
 
 
 class PlanDetailsView(LoginRequiredMixin, View):
+    """
+    Add and update Meal model object related to chosen Plan model object. Require logged-in user.
+    """
     login_url = '/login'
     success_url = '/add_plan'
 
     def get(self, request, plan_id):
+        """
+        Create context data for plan_details.html. Redirect to plan_details.html.
+        :param request: Django request object.
+        :param plan_id: Plan model object primary key to which updated and created Meal objects are related.
+        :return: Redirect to plan_details.html with MealForm and plan and meal objects data in context.
+        """
         form = MealForm()
         plan = Plan.objects.get(pk=plan_id)
         meals = plan.meal_set.all()
@@ -531,6 +570,20 @@ class PlanDetailsView(LoginRequiredMixin, View):
         return TemplateResponse(request, 'main_app/plan_details.html', ctx)
 
     def post(self, request, plan_id):
+        """
+        Create context data for plan_details.html. Validate MealForm. If MealForm is valid create or update requested
+        Meal model object. If Meal for is not valid redirect to plan_details.html.
+        If Meal model object update check for calories amount. If new Meal model object calories amount exceed
+        the calories left for use for plan_day add error message to context. If opposite update requested Meal model
+        object.
+        If Meal model object create check for calories amount. If new Meal model object calories amount exceed
+        the calories left for use for plan_day add error message to context. If opposite create requested Meal model
+        object.
+        :param request: Django request object
+        :param plan_id: Plan model object primary key to which updated and created Meal objects are related.
+        :return: Redirect to plan_details.html with MealForm and plan and meal objects data and optionally error message
+        in context.
+        """
         form = MealForm(request.POST)
         plan = Plan.objects.get(pk=plan_id)
         persons = plan.persons.all()
