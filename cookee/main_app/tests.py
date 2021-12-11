@@ -1,11 +1,11 @@
-from random import randrange, randint, choice, sample
+from random import randint, sample
 from django.contrib.auth.models import User
 
 from main_app.functions import calculate_days_calories
 from main_app.models import Recipe, Product, ProductCategory, Plan, Meal, ProductsQuantities, ShoppingList, \
     ShoppingListProducts
-from main_app.forms import RecipeForm, MealForm
-from django.contrib.auth import authenticate, login, logout
+from main_app.forms import RecipeForm
+from django.contrib.auth import authenticate
 from main_app.utils import three_new_persons_create
 
 import pytest
@@ -18,12 +18,22 @@ faker = Faker('pl_PL')
 
 @pytest.mark.django_db
 def test_home_view(client):
+    """
+    Test HomeView.
+    :param client: Django Client() object.
+    :return: Assert response status code.
+    """
     response = client.get(reverse('home'))
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
 def test_create_user(client):
+    """
+    Test AddUserView.
+    :param client: Django Client() object.
+    :return: Assert if User model object is correctly created.
+    """
     assert User.objects.count() == 0
     post_data = {
         'login': 'Test_user',
@@ -41,6 +51,11 @@ def test_create_user(client):
 
 @pytest.mark.django_db
 def test_login_view(client):
+    """
+    Test LoginView.
+    :param client: Django Client() object.
+    :return: Asser if user is correctly logged-in and view redirects to next url.
+    """
     assert User.objects.count() == 0
     User.objects.create_user(username='Test_user', password='Test_password')
     assert User.objects.count() == 1
@@ -55,6 +70,12 @@ def test_login_view(client):
 
 @pytest.mark.django_db
 def test_logout_view(client, new_user_login):
+    """
+    Test LogoutView.
+    :param client: Django Client() object.
+    :param new_user_login: Fixture that creates and logs in new user.
+    :return: Assert if view stays the same url and if 'Zaloguj' shows on the website.
+    """
     assert new_user_login.is_authenticated
     response = client.get(reverse('logout'))
     assert response.status_code == 200
@@ -63,6 +84,12 @@ def test_logout_view(client, new_user_login):
 
 @pytest.mark.django_db
 def test_products_view(client, new_three_products):
+    """
+    Test ProductsView.
+    :param client: Django Client() object.
+    :param new_three_products: Fixture that creates 3 Product model objects
+    :return: Assert if all created products shows on the website
+    """
     response = client.get('/products')
     assert response.status_code == 200
     products = response.context['products']
@@ -71,6 +98,12 @@ def test_products_view(client, new_three_products):
 
 @pytest.mark.django_db
 def test_recipes_view(client, new_three_recipes):
+    """
+    Test RecipesView.
+    :param client: Django Client() object.
+    :param new_three_recipes: Fixture that creates 3 Recipe model objects
+    :return: Assert if all created recipes shows on the website
+    """
     response = client.get('/recipes')
     assert response.status_code == 200
     recipes = response.context['recipes']
@@ -79,6 +112,12 @@ def test_recipes_view(client, new_three_recipes):
 
 @pytest.mark.django_db
 def test_plans_view(client, new_three_plans):
+    """
+    Test PlansView.
+    :param client: Django Client() object.
+    :param new_three_plans: Fixture that creates 3 Plan model objects
+    :return: Assert if all created plans shows on the website
+    """
     response = client.get('/plans')
     assert response.status_code == 200
     plans = response.context['plans']
@@ -87,6 +126,12 @@ def test_plans_view(client, new_three_plans):
 
 @pytest.mark.django_db
 def test_persons_view(client, new_three_persons):
+    """
+    Test PersonsView.
+    :param client: Django Client() object.
+    :param new_three_persons: Fixture that creates 3 Persons model objects
+    :return: Assert if all created persons shows on the website
+    """
     response = client.get('/persons')
     assert response.status_code == 200
     persons = response.context['persons']
