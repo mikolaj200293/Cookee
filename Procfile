@@ -1,1 +1,1 @@
-web: gunicorn cookee.cookee.wsgi --log-file -
+web: gunicorn cookee.wsgi --log-file -
