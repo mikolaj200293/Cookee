@@ -22,7 +22,7 @@ from main_app.views import HomeView, LoginView, LogoutView, AddUserView, Product
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home', HomeView.as_view(), name='home'),
+    path('', HomeView.as_view(), name='home'),
     path('login', LoginView.as_view(), name='login'),
     path('logout', LogoutView.as_view(), name='logout'),
     path('add_user', AddUserView.as_view(), name='add-user'),
