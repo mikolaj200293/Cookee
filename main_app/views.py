@@ -66,7 +66,7 @@ class LoginView(View):
             logged_user = authenticate(username=username, password=password)
             if logged_user:
                 login(request, logged_user)
-                url_next = request.GET.get('next', '/home')
+                url_next = request.GET.get('next', '/')
                 return redirect(url_next)
             else:
                 ctx['message'] = 'Błędne dane logowania'
